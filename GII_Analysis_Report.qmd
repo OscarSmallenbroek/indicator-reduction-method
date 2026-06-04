@@ -112,8 +112,6 @@ knitr::kable(pca_components, caption = "Components Needed for Target Variance Le
 
 ## Variable Perspective Results
 
-| Subset Size | Mean r_m | Max r_m | Performance vs. Random |
-|-------------|----------|---------|------------------------|
 
 ```{r}
 # Read and display r_m results
@@ -206,21 +204,9 @@ The optimal 15-variable subset with pillar representation:
 
 5. **Policy implications:** A 66% reduction in indicators could simplify data collection and interpretation while maintaining most of the index's discriminatory power
 
-# Recommendations
-
-1. **Adopt the 15-indicator subset** for practical applications requiring reduced indicator sets
-
-2. **Further validation needed:**
-   - Test on different time periods
-   - Apply to other regions/countries
-   - Assess predictive performance for policy outcomes
-
-3. **Consider context-specific adaptations:** The optimal subset may vary by application domain
-
-4. **Document trade-offs:** Users should understand what information is lost with reduced indicator sets
 
 # Limitations
-
+Users should understand what information is lost with reduced indicator sets
 1. Analysis focused on one year (2025); temporal stability needs assessment
 2. Geographic coverage limited to available data (75 countries)
 3. Methods assume linear relationships; non-linear effects may exist
