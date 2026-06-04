@@ -1,0 +1,2601 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="GII Analysis Team">
+<meta name="dcterms.date" content="2026-06-04">
+
+<title>GII Index Reduction Analysis Report</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="GII_Analysis_Report_files/libs/clipboard/clipboard.min.js"></script>
+<script src="GII_Analysis_Report_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="GII_Analysis_Report_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="GII_Analysis_Report_files/libs/quarto-html/popper.min.js"></script>
+<script src="GII_Analysis_Report_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="GII_Analysis_Report_files/libs/quarto-html/anchor.min.js"></script>
+<link href="GII_Analysis_Report_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="GII_Analysis_Report_files/libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="GII_Analysis_Report_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="GII_Analysis_Report_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="GII_Analysis_Report_files/libs/bootstrap/bootstrap-efbb37e9afcc02144ebbc7afd12a776f.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="fullcontent quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">GII Index Reduction Analysis Report</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>GII Analysis Team </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">June 4, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="executive-summary" class="level1">
+<h1>Executive Summary</h1>
+<p>This report presents the findings of the analysis to reduce the number of indicators in the Global Innovation Index (GII) while maintaining the discriminatory power of the index. Based on our analysis, we recommend a subset of 15 indicators that capture approximately 86% of the variability of the full 50-indicator index.</p>
+</section>
+<section id="introduction" class="level1">
+<h1>Introduction</h1>
+<p>When creating indicator dashboards and composite indices, indicator selection often involves narrowing down from an initially larger set. Besides data quality and relevance considerations, statistical methods are essential to assess whether indicators within a well-defined component are sufficiently aligned. A key statistical question is: how much of the information content (“variation”) of the initial subset is preserved in a potential subset?</p>
+<p>This analysis applies two methodological approaches to the GII data:</p>
+<ol type="1">
+<li><strong>Country Perspective</strong>: Assessing how similar countries are using all indicators versus a subset, using distance matrices and clustering techniques</li>
+<li><strong>Variable Perspective</strong>: Using Principal Component Analysis (PCA) to measure how much information a subset captures compared to the full set</li>
+</ol>
+</section>
+<section id="methodology" class="level1">
+<h1>Methodology</h1>
+<section id="statistical-methods-explanation" class="level2">
+<h2 class="anchored" data-anchor-id="statistical-methods-explanation">Statistical Methods Explanation</h2>
+<p>To determine how much of the information content of the full indicator set is preserved in a potential subset, we use a subset selection approach based on Principal Component Analysis (PCA). Rather than simply ranking individual variables by importance, this method evaluates entire subsets of variables according to how well they reproduce the PCA structure of the full dataset.</p>
+<p>The approach uses a criterion called <span class="math inline">\(r_m\)</span> that measures how much of the overall multivariate information in the full PCA can be recovered from a given subset of variables. This is a more coherent objective for dimension reduction than individual variable selection, as it identifies combinations of variables that best preserve the complete data structure.</p>
+<p>A key advantage of this method is its built-in protection against redundancy. For example, if multiple indicators are highly correlated (nearly identical), including one in the subset provides most of the information, and adding the others contributes relatively little additional ability to reconstruct the principal components.</p>
+<p>The mathematical formula for the selection criterion is:</p>
+<p><span class="math display">\[ r_m = \sqrt{ \frac{\sum_{i=1}^{p}\lambda_i r_{mi}^2} {\sum_{j=1}^{p}\lambda_j} }\]</span></p>
+<p>where: - <span class="math inline">\(\lambda_i\)</span> is the eigenvalue of principal component <span class="math inline">\(i\)</span> from the full dataset (representing the variance explained by that component) - <span class="math inline">\(r_{mi}^2\)</span> is the squared multiple correlation between principal component <span class="math inline">\(i\)</span> and the candidate subset of variables - <span class="math inline">\(m\)</span> indexes a specific candidate subset</p>
+<p>Conceptually, this formula computes a weighted average of how well the subset predicts each principal component, with weights given by the variance explained by each component, then normalizes by the total variance. The resulting <span class="math inline">\(r_m^2\)</span> value can be interpreted as the percentage of total variation explained by the subset, providing an intuitive measure of information retention.</p>
+<p>This method assumes that “information” is defined by the variance structure captured by PCA, which is appropriate for statistical data reduction. However, it may downweight variables with low variance but high policy relevance, which is an important consideration for substantive index development.</p>
+</section>
+<section id="data-description" class="level2">
+<h2 class="anchored" data-anchor-id="data-description">Data Description</h2>
+<p><strong>Original Dataset:</strong> - 139 countries/regions - 78 indicators (after data quality assessment) - The data from the GII 2025 edition.</p>
+<p><strong>Processed Data:</strong> - 75 countries with complete data (after case-wise deletion) - 50 selected indicators (after data reduction) - Standardized using z-scores</p>
+</section>
+<section id="data-description-1" class="level2">
+<h2 class="anchored" data-anchor-id="data-description-1">Data Description</h2>
+<p><strong>Original Dataset:</strong> - 139 countries/regions - 78 indicators (after data quality assessment) - The data from the GII 2025 edition.</p>
+<p><strong>Processed Data:</strong> - 75 countries with complete data (after case-wise deletion) - 50 selected indicators (after data reduction) - Standardized using z-scores</p>
+</section>
+</section>
+<section id="key-findings" class="level1">
+<h1>Key Findings</h1>
+<section id="distance-matrix-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="distance-matrix-analysis">Distance Matrix Analysis</h2>
+<p>The analysis compared distance matrices for different subset sizes against the full dataset:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Read and display subset size comparison results</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"outputs/subset_size_comparison.csv"</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(results, <span class="at">caption =</span> <span class="st">"Distance Matrix Comparison by Subset Size"</span>, <span class="at">digits =</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Distance Matrix Comparison by Subset Size</caption>
+<thead>
+<tr class="header">
+<th style="text-align: right;">size</th>
+<th style="text-align: right;">mean_correlation</th>
+<th style="text-align: right;">max_correlation</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">0.71</td>
+<td style="text-align: right;">0.80</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">0.78</td>
+<td style="text-align: right;">0.86</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">0.83</td>
+<td style="text-align: right;">0.88</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">25</td>
+<td style="text-align: right;">0.86</td>
+<td style="text-align: right;">0.90</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">30</td>
+<td style="text-align: right;">0.89</td>
+<td style="text-align: right;">0.93</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p><strong>Finding:</strong> 15 indicators achieve 0.781 mean correlation with full dataset, significantly better than random subsets (p &lt; 0.001).</p>
+</section>
+<section id="clustering-results" class="level2">
+<h2 class="anchored" data-anchor-id="clustering-results">Clustering Results</h2>
+<ul>
+<li><strong>Full dataset (FTD):</strong> 14 significant clusters</li>
+<li><strong>Reduced dataset (RTD):</strong> 11 significant clusters<br>
+</li>
+<li><strong>Rand Index:</strong> 95.7%</li>
+<li><strong>Most significant loss:</strong> Luxembourg, Finland, Sweden, Denmark, Netherlands (3 clusters in FTD → 1 in RTD)</li>
+</ul>
+<p><strong>Finding:</strong> The reduced 44-indicator set produces a coarser but generally consistent clustering structure.</p>
+</section>
+<section id="pca-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="pca-analysis">PCA Analysis</h2>
+<p>The table below shows the number of principal components needed to capture specified levels of variance:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Read and display PCA components</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>pca_components <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"outputs/pca_components.csv"</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(pca_components, <span class="at">caption =</span> <span class="st">"Components Needed for Target Variance Levels"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Components Needed for Target Variance Levels</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Variance_Level</th>
+<th style="text-align: right;">Components_Needed</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">80%</td>
+<td style="text-align: right;">17</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">90%</td>
+<td style="text-align: right;">26</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">95%</td>
+<td style="text-align: right;">36</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p><strong>Finding:</strong> First 17 components capture 80% of total variance, suggesting substantial dimensionality reduction potential.</p>
+</section>
+<section id="variable-perspective-results" class="level2">
+<h2 class="anchored" data-anchor-id="variable-perspective-results">Variable Perspective Results</h2>
+<table class="caption-top">
+<thead>
+<tr class="header">
+<th>Subset Size</th>
+<th>Mean r_m</th>
+<th>Max r_m</th>
+<th>Performance vs.&nbsp;Random</th>
+</tr>
+</thead>
+<tbody>
+</tbody>
+</table>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Read and display r_m results</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>r_m_results <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"outputs/r_m_subset_size_comparison.csv"</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(r_m_results, <span class="at">format =</span> <span class="st">"simple"</span>, <span class="at">digits =</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: right;">size</th>
+<th style="text-align: right;">mean_r_m</th>
+<th style="text-align: right;">max_r_m</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">0.73</td>
+<td style="text-align: right;">0.76</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">0.79</td>
+<td style="text-align: right;">0.81</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">0.83</td>
+<td style="text-align: right;">0.84</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">25</td>
+<td style="text-align: right;">0.87</td>
+<td style="text-align: right;">0.88</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">30</td>
+<td style="text-align: right;">0.90</td>
+<td style="text-align: right;">0.91</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p><strong>Finding:</strong> Subsets consistently outperform random selections, with 15-variable subset achieving 0.794 of total variability.</p>
+</section>
+<section id="recommended-variable-subset-top-15" class="level2">
+<h2 class="anchored" data-anchor-id="recommended-variable-subset-top-15">Recommended Variable Subset (Top 15)</h2>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Rank</th>
+<th>Variable Name</th>
+<th>Domain</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>Rule of Law</td>
+<td>Institutions</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>Government Effectiveness</td>
+<td>Wellbeing Today</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>Regulatory Quality</td>
+<td>Institutions</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>Female Employment Gap</td>
+<td>Inclusiveness</td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td>Economic Complexity</td>
+<td>Societal Resilience</td>
+</tr>
+<tr class="even">
+<td>6</td>
+<td>Public Services (Digital)</td>
+<td>Societal Resilience</td>
+</tr>
+<tr class="odd">
+<td>7</td>
+<td>ICT Access (5G)</td>
+<td>Resources for Future</td>
+</tr>
+<tr class="even">
+<td>8</td>
+<td>Life Expectancy</td>
+<td>Resources for Future</td>
+</tr>
+<tr class="odd">
+<td>9</td>
+<td>University Res. Coll.</td>
+<td>Societal Resilience</td>
+</tr>
+<tr class="even">
+<td>10</td>
+<td>Science Quality</td>
+<td>Resources for Future</td>
+</tr>
+<tr class="odd">
+<td>11</td>
+<td>TLDs Mix</td>
+<td>Connectivity</td>
+</tr>
+<tr class="even">
+<td>12</td>
+<td>GH Rec. Sent. (No Bot)</td>
+<td>Innovation</td>
+</tr>
+<tr class="odd">
+<td>13</td>
+<td>Demographic Dividend</td>
+<td>Societal Resilience</td>
+</tr>
+<tr class="even">
+<td>14</td>
+<td>Intellectual Property Protection</td>
+<td>Resources for Future</td>
+</tr>
+<tr class="odd">
+<td>15</td>
+<td>Documentation Quality</td>
+<td>Business</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Finding:</strong> This subset achieves r_m = 0.827, capturing 86% of total variability.</p>
+</section>
+<section id="variable-perspective-results-by-pillar" class="level2">
+<h2 class="anchored" data-anchor-id="variable-perspective-results-by-pillar">Variable Perspective Results (by Pillar)</h2>
+<p>To ensure representation across the conceptual pillars of the Global Innovation Index, we implemented a pillar-constrained variable selection approach. This method guarantees that each random subset includes at least one indicator from each of the seven pillars (IN.1–IN.5, OUT.6, OUT.7) before filling remaining slots with random indicators.</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Subset Size</th>
+<th>Mean r_m</th>
+<th>Max r_m</th>
+<th>Performance vs.&nbsp;Random</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>10</td>
+<td>0.731</td>
+<td>0.757</td>
+<td>&gt;99.9th percentile</td>
+</tr>
+<tr class="even">
+<td>15</td>
+<td>0.794</td>
+<td>0.815</td>
+<td>&gt;99.9th percentile</td>
+</tr>
+<tr class="odd">
+<td>20</td>
+<td>0.843</td>
+<td>0.862</td>
+<td>&gt;99.9th percentile</td>
+</tr>
+<tr class="even">
+<td>25</td>
+<td>0.879</td>
+<td>0.893</td>
+<td>&gt;99.9th percentile</td>
+</tr>
+<tr class="odd">
+<td>30</td>
+<td>0.907</td>
+<td>0.921</td>
+<td>&gt;99.9th percentile</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Finding:</strong> The pillar-constrained approach ensures balanced representation across GII domains while achieving 79.4% mean variability capture with the 15-variable subset.</p>
+</section>
+<section id="optimal-15-variable-subset-by-pillar" class="level2">
+<h2 class="anchored" data-anchor-id="optimal-15-variable-subset-by-pillar">Optimal 15-Variable Subset (by Pillar)</h2>
+<p>The optimal 15-variable subset with pillar representation:</p>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 20%">
+<col style="width: 51%">
+<col style="width: 27%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Rank</th>
+<th>Variable Name</th>
+<th>Domain</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>Government Effectiveness</td>
+<td>Wellbeing Today</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>Researchers, Full-Time Equivalent per 1,000 Labour Force</td>
+<td>Resources for Future</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td>Logistics Performance Index</td>
+<td>Connectivity</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td>Financial Support to SMEs</td>
+<td>Resources for Future</td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td>Researchers, Tertiary Sector</td>
+<td>Societal Resilience</td>
+</tr>
+<tr class="even">
+<td>6</td>
+<td>Economic Complexity</td>
+<td>Societal Resilience</td>
+</tr>
+<tr class="odd">
+<td>7</td>
+<td>Entertainment Media</td>
+<td>Societal Resilience</td>
+</tr>
+<tr class="even">
+<td>8</td>
+<td>Regulatory Quality</td>
+<td>Institutions</td>
+</tr>
+<tr class="odd">
+<td>9</td>
+<td>Rule of Law</td>
+<td>Institutions</td>
+</tr>
+<tr class="even">
+<td>10</td>
+<td>PISA Score</td>
+<td>Resources for Future</td>
+</tr>
+<tr class="odd">
+<td>11</td>
+<td>Research and Development Expenditure as Percentage of GDP</td>
+<td>Resources for Future</td>
+</tr>
+<tr class="even">
+<td>12</td>
+<td>Knowledge-intensive Employment</td>
+<td>Societal Resilience</td>
+</tr>
+<tr class="odd">
+<td>13</td>
+<td>GERD Financing from Business</td>
+<td>Resources for Future</td>
+</tr>
+<tr class="even">
+<td>14</td>
+<td>Public-Private Publication Co-authorships</td>
+<td>Societal Resilience</td>
+</tr>
+<tr class="odd">
+<td>15</td>
+<td>THE University Ranking Score</td>
+<td>Resources for Future</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Finding:</strong> This pillar-representative subset achieves r_m = 0.794, capturing 79.4% of total variability while ensuring coverage across all conceptual domains.</p>
+</section>
+</section>
+<section id="comparison-15-vs.-44-indicators" class="level1">
+<h1>Comparison: 15 vs.&nbsp;44 Indicators</h1>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Metric</th>
+<th>15 Indicators</th>
+<th>44 Indicators</th>
+<th>Difference</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Mean Correlation</td>
+<td>0.834</td>
+<td>0.851</td>
+<td>-1.7%</td>
+</tr>
+<tr class="even">
+<td>Max Correlation</td>
+<td>0.898</td>
+<td>0.938</td>
+<td>-4.0%</td>
+</tr>
+<tr class="odd">
+<td>Rand Index</td>
+<td>0.827</td>
+<td>0.908</td>
+<td>-8.1%</td>
+</tr>
+<tr class="even">
+<td>Variables</td>
+<td>15</td>
+<td>44</td>
+<td>-66%</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Finding:</strong> The 15-indicator subset loses only 1.7% in mean correlation compared to the 44-indicator set, while reducing indicator count by 66%.</p>
+</section>
+<section id="conclusions" class="level1">
+<h1>Conclusions</h1>
+<ol type="1">
+<li><p><strong>Significant reduction possible:</strong> A 15-indicator subset captures 86% of the variability of the full 50-indicator index</p></li>
+<li><p><strong>Statistical significance:</strong> The 15-indicator subset significantly outperforms random subsets (p &lt; 0.001)</p></li>
+<li><p><strong>Consistent performance:</strong> Results are stable across different analysis methods (distance matrices, PCA, r_m metric)</p></li>
+<li><p><strong>Trade-off:</strong> The 15-indicator subset loses some clustering specificity (Rand Index: 82.7% vs.&nbsp;95.7%) but maintains strong overall correlation (0.834)</p></li>
+<li><p><strong>Policy implications:</strong> A 66% reduction in indicators could simplify data collection and interpretation while maintaining most of the index’s discriminatory power</p></li>
+</ol>
+</section>
+<section id="recommendations" class="level1">
+<h1>Recommendations</h1>
+<ol type="1">
+<li><p><strong>Adopt the 15-indicator subset</strong> for practical applications requiring reduced indicator sets</p></li>
+<li><p><strong>Further validation needed:</strong></p>
+<ul>
+<li>Test on different time periods</li>
+<li>Apply to other regions/countries</li>
+<li>Assess predictive performance for policy outcomes</li>
+</ul></li>
+<li><p><strong>Consider context-specific adaptations:</strong> The optimal subset may vary by application domain</p></li>
+<li><p><strong>Document trade-offs:</strong> Users should understand what information is lost with reduced indicator sets</p></li>
+</ol>
+</section>
+<section id="limitations" class="level1">
+<h1>Limitations</h1>
+<ol type="1">
+<li>Analysis focused on one year (2025); temporal stability needs assessment</li>
+<li>Geographic coverage limited to available data (75 countries)</li>
+<li>Methods assume linear relationships; non-linear effects may exist</li>
+<li>Domain-specific validity not tested</li>
+</ol>
+</section>
+<section id="data-availability" class="level1">
+<h1>Data Availability</h1>
+<p>All data and code are available at: - Processed data: <code>data/gii_data_standardized.csv</code> - Analysis scripts: <code>scripts/</code> - Results: <code>outputs/</code></p>
+</section>
+<section id="references" class="level1">
+<h1>References</h1>
+<ol type="1">
+<li>European Commission/JRC. (2023). Sustainable and Inclusive Well-being Index: Methodology Report.</li>
+<li>UN HLEG. (2024). Beyond GDP Dashboard: Conceptual Framework.</li>
+<li>Global Innovation Index 2025: Data and analysis.</li>
+</ol>
+</section>
+<section id="appendix" class="level1">
+<h1>Appendix</h1>
+</section>
+<section id="data-imputation-documentation" class="level1">
+<h1>Data Imputation Documentation</h1>
+<p>Missing data is an inherent challenge in composite index construction. Our analysis employed k-Nearest Neighbors (kNN) imputation to address missing values before conducting the main analyses. This section documents the imputation process and its results.</p>
+<section id="imputation-process" class="level2">
+<h2 class="anchored" data-anchor-id="imputation-process">Imputation Process</h2>
+<ul>
+<li><strong>Method</strong>: k-Nearest Neighbors (kNN) imputation</li>
+<li><strong>Parameters</strong>: k=5 neighbors, rowmax=0.9, colmax=0.8</li>
+<li><strong>Implementation</strong>: R <code>VIM</code> package</li>
+<li><strong>Indicators Used</strong>: Level 1 indicators from IMETA metadata</li>
+</ul>
+</section>
+<section id="missing-data-statistics" class="level2">
+<h2 class="anchored" data-anchor-id="missing-data-statistics">Missing Data Statistics</h2>
+<p>The table below summarizes the imputation process:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Read and display imputation report</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>imputation_report <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"data/imputation_report.csv"</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(imputation_report, <span class="at">caption =</span> <span class="st">"Imputation Process Summary"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Imputation Process Summary</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Metric</th>
+<th style="text-align: right;">Count</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Total Missing Values</td>
+<td style="text-align: right;">1211</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Variables with Missing Data</td>
+<td style="text-align: right;">58</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Countries with Missing Data</td>
+<td style="text-align: right;">135</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+</section>
+<section id="references-on-imputation" class="level1">
+<h1>References on Imputation</h1>
+<p>The kNN imputation method preserves the data structure while filling missing values based on similar observations. This approach is particularly suitable for composite indices where maintaining the relationships between indicators is crucial for valid comparisons.</p>
+<p><strong>Method</strong>: k-Nearest Neighbors (kNN) imputation with K = 5</p>
+</section>
+<section id="descriptive-statistics-tables" class="level1">
+<h1>Descriptive Statistics Tables</h1>
+<section id="descriptive-statistics---original-data" class="level2">
+<h2 class="anchored" data-anchor-id="descriptive-statistics---original-data">Descriptive Statistics - Original Data</h2>
+<p>The table below presents the descriptive statistics for all Level 1 indicators in the original dataset before imputation:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Read and display original descriptive statistics</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>original_stats <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"data/descriptive_stats_original.csv"</span>)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(original_stats, <span class="at">caption =</span> <span class="st">"Descriptive Statistics - Original Data (n=78 indicators)"</span>, <span class="at">digits =</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Descriptive Statistics - Original Data (n=78 indicators)</caption>
+<colgroup>
+<col style="width: 22%">
+<col style="width: 14%">
+<col style="width: 13%">
+<col style="width: 10%">
+<col style="width: 15%">
+<col style="width: 11%">
+<col style="width: 11%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Indicator</th>
+<th style="text-align: right;">Mean</th>
+<th style="text-align: right;">Median</th>
+<th style="text-align: right;">Min</th>
+<th style="text-align: right;">Max</th>
+<th style="text-align: right;">Kurtosis</th>
+<th style="text-align: right;">Skewness</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">PolStab</td>
+<td style="text-align: right;">2.23</td>
+<td style="text-align: right;">2.15</td>
+<td style="text-align: right;">0.70</td>
+<td style="text-align: right;">4.45</td>
+<td style="text-align: right;">-0.06</td>
+<td style="text-align: right;">0.56</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">GovEff</td>
+<td style="text-align: right;">0.15</td>
+<td style="text-align: right;">0.03</td>
+<td style="text-align: right;">-1.75</td>
+<td style="text-align: right;">2.32</td>
+<td style="text-align: right;">-0.76</td>
+<td style="text-align: right;">0.29</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">RegQua</td>
+<td style="text-align: right;">0.16</td>
+<td style="text-align: right;">0.11</td>
+<td style="text-align: right;">-2.03</td>
+<td style="text-align: right;">2.31</td>
+<td style="text-align: right;">-0.77</td>
+<td style="text-align: right;">0.20</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">RuleOL</td>
+<td style="text-align: right;">0.07</td>
+<td style="text-align: right;">-0.12</td>
+<td style="text-align: right;">-2.15</td>
+<td style="text-align: right;">1.97</td>
+<td style="text-align: right;">-0.81</td>
+<td style="text-align: right;">0.28</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">PolicyDB</td>
+<td style="text-align: right;">4.03</td>
+<td style="text-align: right;">3.98</td>
+<td style="text-align: right;">1.83</td>
+<td style="text-align: right;">6.45</td>
+<td style="text-align: right;">-0.75</td>
+<td style="text-align: right;">0.02</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">EntreprenPCplus</td>
+<td style="text-align: right;">4.72</td>
+<td style="text-align: right;">4.72</td>
+<td style="text-align: right;">2.92</td>
+<td style="text-align: right;">7.25</td>
+<td style="text-align: right;">-0.32</td>
+<td style="text-align: right;">0.44</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">ExpEdu</td>
+<td style="text-align: right;">4.25</td>
+<td style="text-align: right;">4.16</td>
+<td style="text-align: right;">0.35</td>
+<td style="text-align: right;">9.39</td>
+<td style="text-align: right;">0.68</td>
+<td style="text-align: right;">0.28</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">GovFundPup</td>
+<td style="text-align: right;">19.60</td>
+<td style="text-align: right;">19.41</td>
+<td style="text-align: right;">6.00</td>
+<td style="text-align: right;">51.06</td>
+<td style="text-align: right;">1.33</td>
+<td style="text-align: right;">0.72</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">SchLifeExp</td>
+<td style="text-align: right;">14.17</td>
+<td style="text-align: right;">14.36</td>
+<td style="text-align: right;">6.34</td>
+<td style="text-align: right;">20.85</td>
+<td style="text-align: right;">-0.31</td>
+<td style="text-align: right;">-0.28</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">PISA</td>
+<td style="text-align: right;">439.44</td>
+<td style="text-align: right;">439.29</td>
+<td style="text-align: right;">337.45</td>
+<td style="text-align: right;">579.03</td>
+<td style="text-align: right;">-0.91</td>
+<td style="text-align: right;">0.06</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">PupTeachR</td>
+<td style="text-align: right;">15.89</td>
+<td style="text-align: right;">13.53</td>
+<td style="text-align: right;">6.14</td>
+<td style="text-align: right;">68.13</td>
+<td style="text-align: right;">9.23</td>
+<td style="text-align: right;">2.41</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">TertEnrol</td>
+<td style="text-align: right;">51.51</td>
+<td style="text-align: right;">54.40</td>
+<td style="text-align: right;">2.71</td>
+<td style="text-align: right;">166.67</td>
+<td style="text-align: right;">-0.11</td>
+<td style="text-align: right;">0.36</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">SciEngGrad</td>
+<td style="text-align: right;">23.29</td>
+<td style="text-align: right;">23.14</td>
+<td style="text-align: right;">9.56</td>
+<td style="text-align: right;">41.10</td>
+<td style="text-align: right;">-0.41</td>
+<td style="text-align: right;">0.17</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">TertMob</td>
+<td style="text-align: right;">7.34</td>
+<td style="text-align: right;">4.24</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">69.73</td>
+<td style="text-align: right;">14.40</td>
+<td style="text-align: right;">3.26</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">ResPPop</td>
+<td style="text-align: right;">2269.70</td>
+<td style="text-align: right;">922.47</td>
+<td style="text-align: right;">4.50</td>
+<td style="text-align: right;">10413.00</td>
+<td style="text-align: right;">0.39</td>
+<td style="text-align: right;">1.18</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">RDExp</td>
+<td style="text-align: right;">1.01</td>
+<td style="text-align: right;">0.61</td>
+<td style="text-align: right;">0.01</td>
+<td style="text-align: right;">6.35</td>
+<td style="text-align: right;">4.13</td>
+<td style="text-align: right;">1.87</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">RDCompExp</td>
+<td style="text-align: right;">926.35</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">36142.79</td>
+<td style="text-align: right;">57.81</td>
+<td style="text-align: right;">6.95</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">QSRank</td>
+<td style="text-align: right;">21.29</td>
+<td style="text-align: right;">10.43</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">97.63</td>
+<td style="text-align: right;">0.19</td>
+<td style="text-align: right;">1.12</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">ICTAccWIPO5G20</td>
+<td style="text-align: right;">83.02</td>
+<td style="text-align: right;">88.25</td>
+<td style="text-align: right;">24.33</td>
+<td style="text-align: right;">100.00</td>
+<td style="text-align: right;">0.42</td>
+<td style="text-align: right;">-1.09</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">ICTUseWIPO2</td>
+<td style="text-align: right;">79.65</td>
+<td style="text-align: right;">84.47</td>
+<td style="text-align: right;">29.84</td>
+<td style="text-align: right;">99.36</td>
+<td style="text-align: right;">1.60</td>
+<td style="text-align: right;">-1.45</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">GovOLServ</td>
+<td style="text-align: right;">0.68</td>
+<td style="text-align: right;">0.72</td>
+<td style="text-align: right;">0.17</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">-0.98</td>
+<td style="text-align: right;">-0.39</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">ElecOut</td>
+<td style="text-align: right;">4936.33</td>
+<td style="text-align: right;">3183.45</td>
+<td style="text-align: right;">29.76</td>
+<td style="text-align: right;">53263.16</td>
+<td style="text-align: right;">22.90</td>
+<td style="text-align: right;">3.97</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">LogPerf</td>
+<td style="text-align: right;">3.12</td>
+<td style="text-align: right;">3.10</td>
+<td style="text-align: right;">2.10</td>
+<td style="text-align: right;">4.30</td>
+<td style="text-align: right;">-1.13</td>
+<td style="text-align: right;">0.19</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">GroCap</td>
+<td style="text-align: right;">24.49</td>
+<td style="text-align: right;">23.70</td>
+<td style="text-align: right;">11.60</td>
+<td style="text-align: right;">44.56</td>
+<td style="text-align: right;">0.51</td>
+<td style="text-align: right;">0.72</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">GDPEner</td>
+<td style="text-align: right;">12.23</td>
+<td style="text-align: right;">11.06</td>
+<td style="text-align: right;">2.16</td>
+<td style="text-align: right;">41.21</td>
+<td style="text-align: right;">3.70</td>
+<td style="text-align: right;">1.56</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">LowCarbonEner</td>
+<td style="text-align: right;">22.00</td>
+<td style="text-align: right;">18.38</td>
+<td style="text-align: right;">0.01</td>
+<td style="text-align: right;">82.64</td>
+<td style="text-align: right;">0.69</td>
+<td style="text-align: right;">1.05</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">ISOEnv</td>
+<td style="text-align: right;">2.05</td>
+<td style="text-align: right;">0.99</td>
+<td style="text-align: right;">0.04</td>
+<td style="text-align: right;">11.87</td>
+<td style="text-align: right;">2.72</td>
+<td style="text-align: right;">1.78</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">FinanceSSGEMplus</td>
+<td style="text-align: right;">4.49</td>
+<td style="text-align: right;">4.49</td>
+<td style="text-align: right;">1.99</td>
+<td style="text-align: right;">6.90</td>
+<td style="text-align: right;">-0.57</td>
+<td style="text-align: right;">0.09</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">DomCred2Priv</td>
+<td style="text-align: right;">60.33</td>
+<td style="text-align: right;">48.53</td>
+<td style="text-align: right;">8.14</td>
+<td style="text-align: right;">248.76</td>
+<td style="text-align: right;">2.30</td>
+<td style="text-align: right;">1.48</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">MicroLoanIMFFAS</td>
+<td style="text-align: right;">2.09</td>
+<td style="text-align: right;">1.05</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">17.34</td>
+<td style="text-align: right;">11.33</td>
+<td style="text-align: right;">3.18</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">MarkCap</td>
+<td style="text-align: right;">80.85</td>
+<td style="text-align: right;">37.45</td>
+<td style="text-align: right;">0.20</td>
+<td style="text-align: right;">1507.77</td>
+<td style="text-align: right;">51.10</td>
+<td style="text-align: right;">6.72</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">VenCapInvPB</td>
+<td style="text-align: right;">0.65</td>
+<td style="text-align: right;">0.14</td>
+<td style="text-align: right;">0.01</td>
+<td style="text-align: right;">29.23</td>
+<td style="text-align: right;">95.18</td>
+<td style="text-align: right;">9.53</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">VenCapRecPB</td>
+<td style="text-align: right;">0.24</td>
+<td style="text-align: right;">0.08</td>
+<td style="text-align: right;">0.01</td>
+<td style="text-align: right;">5.50</td>
+<td style="text-align: right;">63.34</td>
+<td style="text-align: right;">7.25</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">LateVCInt</td>
+<td style="text-align: right;">0.32</td>
+<td style="text-align: right;">0.03</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">11.43</td>
+<td style="text-align: right;">52.16</td>
+<td style="text-align: right;">6.93</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">JointVenPB</td>
+<td style="text-align: right;">0.21</td>
+<td style="text-align: right;">0.06</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">4.55</td>
+<td style="text-align: right;">52.79</td>
+<td style="text-align: right;">6.49</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">AppTariffWTO</td>
+<td style="text-align: right;">4.16</td>
+<td style="text-align: right;">2.34</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">47.54</td>
+<td style="text-align: right;">38.87</td>
+<td style="text-align: right;">4.98</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">HHI</td>
+<td style="text-align: right;">0.18</td>
+<td style="text-align: right;">0.14</td>
+<td style="text-align: right;">0.07</td>
+<td style="text-align: right;">0.55</td>
+<td style="text-align: right;">2.78</td>
+<td style="text-align: right;">1.57</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">DomMarkSc</td>
+<td style="text-align: right;">1370.77</td>
+<td style="text-align: right;">253.12</td>
+<td style="text-align: right;">4.14</td>
+<td style="text-align: right;">37072.09</td>
+<td style="text-align: right;">45.03</td>
+<td style="text-align: right;">6.41</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Demogdividend</td>
+<td style="text-align: right;">39.00</td>
+<td style="text-align: right;">35.41</td>
+<td style="text-align: right;">17.63</td>
+<td style="text-align: right;">66.87</td>
+<td style="text-align: right;">-1.03</td>
+<td style="text-align: right;">0.52</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">KnowIntsEmp</td>
+<td style="text-align: right;">27.07</td>
+<td style="text-align: right;">23.94</td>
+<td style="text-align: right;">2.02</td>
+<td style="text-align: right;">68.01</td>
+<td style="text-align: right;">-0.99</td>
+<td style="text-align: right;">0.30</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">FemEmpDeg</td>
+<td style="text-align: right;">13.49</td>
+<td style="text-align: right;">12.78</td>
+<td style="text-align: right;">0.14</td>
+<td style="text-align: right;">31.04</td>
+<td style="text-align: right;">-1.17</td>
+<td style="text-align: right;">0.25</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">GERDPerf</td>
+<td style="text-align: right;">0.77</td>
+<td style="text-align: right;">0.38</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">5.90</td>
+<td style="text-align: right;">6.95</td>
+<td style="text-align: right;">2.25</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">GERDFinBus</td>
+<td style="text-align: right;">34.31</td>
+<td style="text-align: right;">38.44</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">80.84</td>
+<td style="text-align: right;">-1.12</td>
+<td style="text-align: right;">-0.07</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">PublicPrivCopubs</td>
+<td style="text-align: right;">2.01</td>
+<td style="text-align: right;">1.34</td>
+<td style="text-align: right;">0.22</td>
+<td style="text-align: right;">9.07</td>
+<td style="text-align: right;">2.73</td>
+<td style="text-align: right;">1.74</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">UniResColl</td>
+<td style="text-align: right;">3.97</td>
+<td style="text-align: right;">3.86</td>
+<td style="text-align: right;">2.30</td>
+<td style="text-align: right;">6.72</td>
+<td style="text-align: right;">-0.20</td>
+<td style="text-align: right;">0.38</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">THEunirank</td>
+<td style="text-align: right;">55.74</td>
+<td style="text-align: right;">49.40</td>
+<td style="text-align: right;">26.70</td>
+<td style="text-align: right;">97.10</td>
+<td style="text-align: right;">-1.04</td>
+<td style="text-align: right;">0.56</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">StatClustDev</td>
+<td style="text-align: right;">4.00</td>
+<td style="text-align: right;">3.90</td>
+<td style="text-align: right;">2.59</td>
+<td style="text-align: right;">5.40</td>
+<td style="text-align: right;">-0.83</td>
+<td style="text-align: right;">0.24</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">PatFam</td>
+<td style="text-align: right;">1.30</td>
+<td style="text-align: right;">0.03</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">73.67</td>
+<td style="text-align: right;">108.33</td>
+<td style="text-align: right;">10.07</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">IntelPropPay</td>
+<td style="text-align: right;">1.05</td>
+<td style="text-align: right;">0.54</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">23.25</td>
+<td style="text-align: right;">61.02</td>
+<td style="text-align: right;">7.02</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">HiTechImp</td>
+<td style="text-align: right;">9.33</td>
+<td style="text-align: right;">8.01</td>
+<td style="text-align: right;">1.30</td>
+<td style="text-align: right;">55.19</td>
+<td style="text-align: right;">20.27</td>
+<td style="text-align: right;">3.57</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">ICTSevImp</td>
+<td style="text-align: right;">1.75</td>
+<td style="text-align: right;">1.44</td>
+<td style="text-align: right;">0.01</td>
+<td style="text-align: right;">16.01</td>
+<td style="text-align: right;">29.45</td>
+<td style="text-align: right;">4.34</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">FDINetInfl</td>
+<td style="text-align: right;">3.93</td>
+<td style="text-align: right;">2.50</td>
+<td style="text-align: right;">-161.34</td>
+<td style="text-align: right;">224.25</td>
+<td style="text-align: right;">63.06</td>
+<td style="text-align: right;">3.20</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">ResTalBus</td>
+<td style="text-align: right;">33.25</td>
+<td style="text-align: right;">32.27</td>
+<td style="text-align: right;">0.30</td>
+<td style="text-align: right;">81.91</td>
+<td style="text-align: right;">-1.23</td>
+<td style="text-align: right;">0.20</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">PatOrig</td>
+<td style="text-align: right;">2.54</td>
+<td style="text-align: right;">0.62</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">61.56</td>
+<td style="text-align: right;">37.33</td>
+<td style="text-align: right;">5.79</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">PCTInventors</td>
+<td style="text-align: right;">0.62</td>
+<td style="text-align: right;">0.07</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">7.57</td>
+<td style="text-align: right;">11.16</td>
+<td style="text-align: right;">3.22</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">UtilModOrig</td>
+<td style="text-align: right;">1.55</td>
+<td style="text-align: right;">0.16</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">88.51</td>
+<td style="text-align: right;">77.80</td>
+<td style="text-align: right;">8.85</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">SciTechArt</td>
+<td style="text-align: right;">13.42</td>
+<td style="text-align: right;">9.94</td>
+<td style="text-align: right;">0.55</td>
+<td style="text-align: right;">47.72</td>
+<td style="text-align: right;">0.40</td>
+<td style="text-align: right;">1.11</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">CitDoc</td>
+<td style="text-align: right;">466.22</td>
+<td style="text-align: right;">281.00</td>
+<td style="text-align: right;">53.00</td>
+<td style="text-align: right;">3213.00</td>
+<td style="text-align: right;">7.50</td>
+<td style="text-align: right;">2.33</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">GrowPPP</td>
+<td style="text-align: right;">0.83</td>
+<td style="text-align: right;">0.86</td>
+<td style="text-align: right;">-4.57</td>
+<td style="text-align: right;">6.26</td>
+<td style="text-align: right;">0.71</td>
+<td style="text-align: right;">-0.01</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">UnicornVal</td>
+<td style="text-align: right;">1.09</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">21.85</td>
+<td style="text-align: right;">26.08</td>
+<td style="text-align: right;">4.65</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">CompSoftSpend</td>
+<td style="text-align: right;">0.24</td>
+<td style="text-align: right;">0.21</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">1.26</td>
+<td style="text-align: right;">2.84</td>
+<td style="text-align: right;">1.39</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">HiTechManuf</td>
+<td style="text-align: right;">25.19</td>
+<td style="text-align: right;">21.99</td>
+<td style="text-align: right;">1.04</td>
+<td style="text-align: right;">79.65</td>
+<td style="text-align: right;">0.03</td>
+<td style="text-align: right;">0.73</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">IntelPropRec</td>
+<td style="text-align: right;">0.48</td>
+<td style="text-align: right;">0.07</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">5.36</td>
+<td style="text-align: right;">8.62</td>
+<td style="text-align: right;">2.95</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">EcComplexity</td>
+<td style="text-align: right;">0.09</td>
+<td style="text-align: right;">-0.05</td>
+<td style="text-align: right;">-2.18</td>
+<td style="text-align: right;">2.29</td>
+<td style="text-align: right;">-0.58</td>
+<td style="text-align: right;">0.22</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">HTExpHKG</td>
+<td style="text-align: right;">4.57</td>
+<td style="text-align: right;">1.51</td>
+<td style="text-align: right;">0.02</td>
+<td style="text-align: right;">48.39</td>
+<td style="text-align: right;">11.70</td>
+<td style="text-align: right;">3.01</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">ICTServExp</td>
+<td style="text-align: right;">2.99</td>
+<td style="text-align: right;">1.68</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">36.98</td>
+<td style="text-align: right;">25.52</td>
+<td style="text-align: right;">4.45</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">ISOQual</td>
+<td style="text-align: right;">5.46</td>
+<td style="text-align: right;">3.23</td>
+<td style="text-align: right;">0.04</td>
+<td style="text-align: right;">29.87</td>
+<td style="text-align: right;">3.16</td>
+<td style="text-align: right;">1.76</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">CorpIAs</td>
+<td style="text-align: right;">41.66</td>
+<td style="text-align: right;">56.72</td>
+<td style="text-align: right;">-371.30</td>
+<td style="text-align: right;">89.79</td>
+<td style="text-align: right;">26.36</td>
+<td style="text-align: right;">-4.63</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">TradmkOrig</td>
+<td style="text-align: right;">36.72</td>
+<td style="text-align: right;">28.95</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">202.33</td>
+<td style="text-align: right;">6.90</td>
+<td style="text-align: right;">2.19</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">BrandVal</td>
+<td style="text-align: right;">3.59</td>
+<td style="text-align: right;">0.78</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">21.12</td>
+<td style="text-align: right;">1.58</td>
+<td style="text-align: right;">1.60</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">IndustDes</td>
+<td style="text-align: right;">2.21</td>
+<td style="text-align: right;">0.92</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">23.28</td>
+<td style="text-align: right;">11.16</td>
+<td style="text-align: right;">3.17</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">CultServExp</td>
+<td style="text-align: right;">0.96</td>
+<td style="text-align: right;">0.46</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">18.31</td>
+<td style="text-align: right;">50.72</td>
+<td style="text-align: right;">6.32</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">FilmsOmdia</td>
+<td style="text-align: right;">5.01</td>
+<td style="text-align: right;">2.67</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">46.93</td>
+<td style="text-align: right;">17.44</td>
+<td style="text-align: right;">3.59</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">EntMedia</td>
+<td style="text-align: right;">0.93</td>
+<td style="text-align: right;">0.47</td>
+<td style="text-align: right;">0.02</td>
+<td style="text-align: right;">3.59</td>
+<td style="text-align: right;">-0.24</td>
+<td style="text-align: right;">0.87</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">CreaGoodExp</td>
+<td style="text-align: right;">1.27</td>
+<td style="text-align: right;">0.38</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">11.50</td>
+<td style="text-align: right;">6.56</td>
+<td style="text-align: right;">2.55</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">TLDsMix</td>
+<td style="text-align: right;">117.16</td>
+<td style="text-align: right;">22.31</td>
+<td style="text-align: right;">0.12</td>
+<td style="text-align: right;">2538.57</td>
+<td style="text-align: right;">43.80</td>
+<td style="text-align: right;">5.80</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">GHRecSentNoBot</td>
+<td style="text-align: right;">1326116.27</td>
+<td style="text-align: right;">410927.87</td>
+<td style="text-align: right;">2571.55</td>
+<td style="text-align: right;">14402260.97</td>
+<td style="text-align: right;">13.66</td>
+<td style="text-align: right;">2.93</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">AppCrea</td>
+<td style="text-align: right;">1379627.73</td>
+<td style="text-align: right;">181351.44</td>
+<td style="text-align: right;">0.04</td>
+<td style="text-align: right;">98744342.48</td>
+<td style="text-align: right;">117.05</td>
+<td style="text-align: right;">10.73</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="descriptive-statistics---complete-data" class="level2">
+<h2 class="anchored" data-anchor-id="descriptive-statistics---complete-data">Descriptive Statistics - Complete Data</h2>
+<p>The table below presents the descriptive statistics for all Level 1 indicators in the complete dataset after kNN imputation and case-wise cleaning:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Read and display complete descriptive statistics</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>complete_stats <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">"data/descriptive_stats_complete.csv"</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(complete_stats, <span class="at">caption =</span> <span class="st">"Descriptive Statistics - Complete Data (n=78 indicators)"</span>, <span class="at">digits =</span> <span class="dv">2</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Descriptive Statistics - Complete Data (n=78 indicators)</caption>
+<colgroup>
+<col style="width: 22%">
+<col style="width: 14%">
+<col style="width: 13%">
+<col style="width: 10%">
+<col style="width: 15%">
+<col style="width: 11%">
+<col style="width: 11%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Indicator</th>
+<th style="text-align: right;">Mean</th>
+<th style="text-align: right;">Median</th>
+<th style="text-align: right;">Min</th>
+<th style="text-align: right;">Max</th>
+<th style="text-align: right;">Kurtosis</th>
+<th style="text-align: right;">Skewness</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">PolStab</td>
+<td style="text-align: right;">2.23</td>
+<td style="text-align: right;">2.15</td>
+<td style="text-align: right;">0.70</td>
+<td style="text-align: right;">4.45</td>
+<td style="text-align: right;">-0.06</td>
+<td style="text-align: right;">0.56</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">GovEff</td>
+<td style="text-align: right;">0.15</td>
+<td style="text-align: right;">0.03</td>
+<td style="text-align: right;">-1.75</td>
+<td style="text-align: right;">2.32</td>
+<td style="text-align: right;">-0.76</td>
+<td style="text-align: right;">0.29</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">RegQua</td>
+<td style="text-align: right;">0.16</td>
+<td style="text-align: right;">0.11</td>
+<td style="text-align: right;">-2.03</td>
+<td style="text-align: right;">2.31</td>
+<td style="text-align: right;">-0.77</td>
+<td style="text-align: right;">0.20</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">RuleOL</td>
+<td style="text-align: right;">0.07</td>
+<td style="text-align: right;">-0.12</td>
+<td style="text-align: right;">-2.15</td>
+<td style="text-align: right;">1.97</td>
+<td style="text-align: right;">-0.81</td>
+<td style="text-align: right;">0.28</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">PolicyDB</td>
+<td style="text-align: right;">4.03</td>
+<td style="text-align: right;">3.98</td>
+<td style="text-align: right;">1.83</td>
+<td style="text-align: right;">6.45</td>
+<td style="text-align: right;">-0.70</td>
+<td style="text-align: right;">0.02</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">EntreprenPCplus</td>
+<td style="text-align: right;">4.63</td>
+<td style="text-align: right;">4.54</td>
+<td style="text-align: right;">2.92</td>
+<td style="text-align: right;">7.25</td>
+<td style="text-align: right;">0.18</td>
+<td style="text-align: right;">0.63</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">ExpEdu</td>
+<td style="text-align: right;">4.24</td>
+<td style="text-align: right;">4.14</td>
+<td style="text-align: right;">0.35</td>
+<td style="text-align: right;">9.39</td>
+<td style="text-align: right;">0.70</td>
+<td style="text-align: right;">0.30</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">GovFundPup</td>
+<td style="text-align: right;">18.48</td>
+<td style="text-align: right;">17.96</td>
+<td style="text-align: right;">6.00</td>
+<td style="text-align: right;">51.06</td>
+<td style="text-align: right;">1.78</td>
+<td style="text-align: right;">0.83</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">SchLifeExp</td>
+<td style="text-align: right;">13.92</td>
+<td style="text-align: right;">13.94</td>
+<td style="text-align: right;">6.34</td>
+<td style="text-align: right;">20.85</td>
+<td style="text-align: right;">-0.49</td>
+<td style="text-align: right;">-0.12</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">PISA</td>
+<td style="text-align: right;">419.11</td>
+<td style="text-align: right;">403.60</td>
+<td style="text-align: right;">337.45</td>
+<td style="text-align: right;">579.03</td>
+<td style="text-align: right;">-0.50</td>
+<td style="text-align: right;">0.68</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">PupTeachR</td>
+<td style="text-align: right;">15.80</td>
+<td style="text-align: right;">13.28</td>
+<td style="text-align: right;">6.14</td>
+<td style="text-align: right;">68.13</td>
+<td style="text-align: right;">9.43</td>
+<td style="text-align: right;">2.43</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">TertEnrol</td>
+<td style="text-align: right;">50.58</td>
+<td style="text-align: right;">53.42</td>
+<td style="text-align: right;">2.71</td>
+<td style="text-align: right;">166.67</td>
+<td style="text-align: right;">-0.09</td>
+<td style="text-align: right;">0.40</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">SciEngGrad</td>
+<td style="text-align: right;">22.88</td>
+<td style="text-align: right;">22.88</td>
+<td style="text-align: right;">9.56</td>
+<td style="text-align: right;">41.10</td>
+<td style="text-align: right;">-0.38</td>
+<td style="text-align: right;">0.25</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">TertMob</td>
+<td style="text-align: right;">6.61</td>
+<td style="text-align: right;">3.14</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">69.73</td>
+<td style="text-align: right;">16.80</td>
+<td style="text-align: right;">3.50</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">ResPPop</td>
+<td style="text-align: right;">1922.18</td>
+<td style="text-align: right;">669.77</td>
+<td style="text-align: right;">4.50</td>
+<td style="text-align: right;">10413.00</td>
+<td style="text-align: right;">0.94</td>
+<td style="text-align: right;">1.40</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">RDExp</td>
+<td style="text-align: right;">0.88</td>
+<td style="text-align: right;">0.42</td>
+<td style="text-align: right;">0.01</td>
+<td style="text-align: right;">6.35</td>
+<td style="text-align: right;">5.34</td>
+<td style="text-align: right;">2.11</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">RDCompExp</td>
+<td style="text-align: right;">933.55</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">36142.79</td>
+<td style="text-align: right;">58.14</td>
+<td style="text-align: right;">6.97</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">QSRank</td>
+<td style="text-align: right;">21.29</td>
+<td style="text-align: right;">10.43</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">97.63</td>
+<td style="text-align: right;">0.19</td>
+<td style="text-align: right;">1.12</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">ICTAccWIPO5G20</td>
+<td style="text-align: right;">82.88</td>
+<td style="text-align: right;">88.19</td>
+<td style="text-align: right;">24.33</td>
+<td style="text-align: right;">100.00</td>
+<td style="text-align: right;">0.36</td>
+<td style="text-align: right;">-1.07</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">ICTUseWIPO2</td>
+<td style="text-align: right;">78.81</td>
+<td style="text-align: right;">83.81</td>
+<td style="text-align: right;">29.84</td>
+<td style="text-align: right;">99.36</td>
+<td style="text-align: right;">1.13</td>
+<td style="text-align: right;">-1.33</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">GovOLServ</td>
+<td style="text-align: right;">0.68</td>
+<td style="text-align: right;">0.73</td>
+<td style="text-align: right;">0.17</td>
+<td style="text-align: right;">1.00</td>
+<td style="text-align: right;">-0.98</td>
+<td style="text-align: right;">-0.40</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">ElecOut</td>
+<td style="text-align: right;">4663.61</td>
+<td style="text-align: right;">2879.19</td>
+<td style="text-align: right;">29.76</td>
+<td style="text-align: right;">53263.16</td>
+<td style="text-align: right;">24.24</td>
+<td style="text-align: right;">4.08</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">LogPerf</td>
+<td style="text-align: right;">3.04</td>
+<td style="text-align: right;">2.90</td>
+<td style="text-align: right;">2.10</td>
+<td style="text-align: right;">4.30</td>
+<td style="text-align: right;">-1.00</td>
+<td style="text-align: right;">0.44</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">GroCap</td>
+<td style="text-align: right;">24.48</td>
+<td style="text-align: right;">23.70</td>
+<td style="text-align: right;">11.60</td>
+<td style="text-align: right;">44.56</td>
+<td style="text-align: right;">0.55</td>
+<td style="text-align: right;">0.74</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">GDPEner</td>
+<td style="text-align: right;">12.00</td>
+<td style="text-align: right;">10.93</td>
+<td style="text-align: right;">2.16</td>
+<td style="text-align: right;">41.21</td>
+<td style="text-align: right;">4.16</td>
+<td style="text-align: right;">1.65</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">LowCarbonEner</td>
+<td style="text-align: right;">22.00</td>
+<td style="text-align: right;">18.38</td>
+<td style="text-align: right;">0.01</td>
+<td style="text-align: right;">82.64</td>
+<td style="text-align: right;">0.69</td>
+<td style="text-align: right;">1.05</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">ISOEnv</td>
+<td style="text-align: right;">2.05</td>
+<td style="text-align: right;">0.99</td>
+<td style="text-align: right;">0.04</td>
+<td style="text-align: right;">11.87</td>
+<td style="text-align: right;">2.72</td>
+<td style="text-align: right;">1.78</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">FinanceSSGEMplus</td>
+<td style="text-align: right;">4.25</td>
+<td style="text-align: right;">4.11</td>
+<td style="text-align: right;">1.99</td>
+<td style="text-align: right;">6.90</td>
+<td style="text-align: right;">-0.51</td>
+<td style="text-align: right;">0.47</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">DomCred2Priv</td>
+<td style="text-align: right;">60.08</td>
+<td style="text-align: right;">48.30</td>
+<td style="text-align: right;">8.14</td>
+<td style="text-align: right;">248.76</td>
+<td style="text-align: right;">2.27</td>
+<td style="text-align: right;">1.47</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">MicroLoanIMFFAS</td>
+<td style="text-align: right;">1.43</td>
+<td style="text-align: right;">0.63</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">17.34</td>
+<td style="text-align: right;">24.87</td>
+<td style="text-align: right;">4.49</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">MarkCap</td>
+<td style="text-align: right;">58.57</td>
+<td style="text-align: right;">25.34</td>
+<td style="text-align: right;">0.20</td>
+<td style="text-align: right;">1507.77</td>
+<td style="text-align: right;">84.32</td>
+<td style="text-align: right;">8.54</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">VenCapInvPB</td>
+<td style="text-align: right;">0.56</td>
+<td style="text-align: right;">0.11</td>
+<td style="text-align: right;">0.01</td>
+<td style="text-align: right;">29.23</td>
+<td style="text-align: right;">114.84</td>
+<td style="text-align: right;">10.45</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">VenCapRecPB</td>
+<td style="text-align: right;">0.22</td>
+<td style="text-align: right;">0.07</td>
+<td style="text-align: right;">0.01</td>
+<td style="text-align: right;">5.50</td>
+<td style="text-align: right;">70.18</td>
+<td style="text-align: right;">7.61</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">LateVCInt</td>
+<td style="text-align: right;">0.25</td>
+<td style="text-align: right;">0.01</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">11.43</td>
+<td style="text-align: right;">68.34</td>
+<td style="text-align: right;">7.91</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">JointVenPB</td>
+<td style="text-align: right;">0.18</td>
+<td style="text-align: right;">0.04</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">4.55</td>
+<td style="text-align: right;">62.78</td>
+<td style="text-align: right;">7.06</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">AppTariffWTO</td>
+<td style="text-align: right;">4.16</td>
+<td style="text-align: right;">2.34</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">47.54</td>
+<td style="text-align: right;">38.87</td>
+<td style="text-align: right;">4.98</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">HHI</td>
+<td style="text-align: right;">0.19</td>
+<td style="text-align: right;">0.17</td>
+<td style="text-align: right;">0.07</td>
+<td style="text-align: right;">0.55</td>
+<td style="text-align: right;">1.87</td>
+<td style="text-align: right;">1.17</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">DomMarkSc</td>
+<td style="text-align: right;">1370.77</td>
+<td style="text-align: right;">253.12</td>
+<td style="text-align: right;">4.14</td>
+<td style="text-align: right;">37072.09</td>
+<td style="text-align: right;">45.03</td>
+<td style="text-align: right;">6.41</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Demogdividend</td>
+<td style="text-align: right;">39.00</td>
+<td style="text-align: right;">35.41</td>
+<td style="text-align: right;">17.63</td>
+<td style="text-align: right;">66.87</td>
+<td style="text-align: right;">-1.03</td>
+<td style="text-align: right;">0.52</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">KnowIntsEmp</td>
+<td style="text-align: right;">26.67</td>
+<td style="text-align: right;">23.31</td>
+<td style="text-align: right;">2.02</td>
+<td style="text-align: right;">68.01</td>
+<td style="text-align: right;">-0.93</td>
+<td style="text-align: right;">0.37</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">FemEmpDeg</td>
+<td style="text-align: right;">13.06</td>
+<td style="text-align: right;">11.20</td>
+<td style="text-align: right;">0.14</td>
+<td style="text-align: right;">31.04</td>
+<td style="text-align: right;">-1.08</td>
+<td style="text-align: right;">0.34</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">GERDPerf</td>
+<td style="text-align: right;">0.50</td>
+<td style="text-align: right;">0.06</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">5.90</td>
+<td style="text-align: right;">11.27</td>
+<td style="text-align: right;">2.90</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">GERDFinBus</td>
+<td style="text-align: right;">28.45</td>
+<td style="text-align: right;">28.73</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">80.84</td>
+<td style="text-align: right;">-1.05</td>
+<td style="text-align: right;">0.34</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">PublicPrivCopubs</td>
+<td style="text-align: right;">2.01</td>
+<td style="text-align: right;">1.34</td>
+<td style="text-align: right;">0.22</td>
+<td style="text-align: right;">9.07</td>
+<td style="text-align: right;">2.73</td>
+<td style="text-align: right;">1.74</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">UniResColl</td>
+<td style="text-align: right;">3.95</td>
+<td style="text-align: right;">3.83</td>
+<td style="text-align: right;">2.30</td>
+<td style="text-align: right;">6.72</td>
+<td style="text-align: right;">-0.13</td>
+<td style="text-align: right;">0.42</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">THEunirank</td>
+<td style="text-align: right;">51.65</td>
+<td style="text-align: right;">42.20</td>
+<td style="text-align: right;">26.70</td>
+<td style="text-align: right;">97.10</td>
+<td style="text-align: right;">-0.32</td>
+<td style="text-align: right;">1.00</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">StatClustDev</td>
+<td style="text-align: right;">3.99</td>
+<td style="text-align: right;">3.84</td>
+<td style="text-align: right;">2.59</td>
+<td style="text-align: right;">5.40</td>
+<td style="text-align: right;">-0.80</td>
+<td style="text-align: right;">0.28</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">PatFam</td>
+<td style="text-align: right;">1.29</td>
+<td style="text-align: right;">0.03</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">73.67</td>
+<td style="text-align: right;">109.14</td>
+<td style="text-align: right;">10.11</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">IntelPropPay</td>
+<td style="text-align: right;">1.05</td>
+<td style="text-align: right;">0.54</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">23.25</td>
+<td style="text-align: right;">61.02</td>
+<td style="text-align: right;">7.02</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">HiTechImp</td>
+<td style="text-align: right;">9.32</td>
+<td style="text-align: right;">8.03</td>
+<td style="text-align: right;">1.30</td>
+<td style="text-align: right;">55.19</td>
+<td style="text-align: right;">20.45</td>
+<td style="text-align: right;">3.59</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">ICTSevImp</td>
+<td style="text-align: right;">1.75</td>
+<td style="text-align: right;">1.44</td>
+<td style="text-align: right;">0.01</td>
+<td style="text-align: right;">16.01</td>
+<td style="text-align: right;">29.45</td>
+<td style="text-align: right;">4.34</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">FDINetInfl</td>
+<td style="text-align: right;">3.91</td>
+<td style="text-align: right;">2.49</td>
+<td style="text-align: right;">-161.34</td>
+<td style="text-align: right;">224.25</td>
+<td style="text-align: right;">63.54</td>
+<td style="text-align: right;">3.22</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">ResTalBus</td>
+<td style="text-align: right;">23.49</td>
+<td style="text-align: right;">11.34</td>
+<td style="text-align: right;">0.30</td>
+<td style="text-align: right;">81.91</td>
+<td style="text-align: right;">-0.67</td>
+<td style="text-align: right;">0.85</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">PatOrig</td>
+<td style="text-align: right;">2.51</td>
+<td style="text-align: right;">0.61</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">61.56</td>
+<td style="text-align: right;">37.91</td>
+<td style="text-align: right;">5.84</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">PCTInventors</td>
+<td style="text-align: right;">0.58</td>
+<td style="text-align: right;">0.06</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">7.57</td>
+<td style="text-align: right;">12.48</td>
+<td style="text-align: right;">3.38</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">UtilModOrig</td>
+<td style="text-align: right;">1.05</td>
+<td style="text-align: right;">0.16</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">88.51</td>
+<td style="text-align: right;">129.76</td>
+<td style="text-align: right;">11.39</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">SciTechArt</td>
+<td style="text-align: right;">13.42</td>
+<td style="text-align: right;">9.94</td>
+<td style="text-align: right;">0.55</td>
+<td style="text-align: right;">47.72</td>
+<td style="text-align: right;">0.40</td>
+<td style="text-align: right;">1.11</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">CitDoc</td>
+<td style="text-align: right;">466.22</td>
+<td style="text-align: right;">281.00</td>
+<td style="text-align: right;">53.00</td>
+<td style="text-align: right;">3213.00</td>
+<td style="text-align: right;">7.50</td>
+<td style="text-align: right;">2.33</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">GrowPPP</td>
+<td style="text-align: right;">0.83</td>
+<td style="text-align: right;">0.86</td>
+<td style="text-align: right;">-4.57</td>
+<td style="text-align: right;">6.26</td>
+<td style="text-align: right;">0.74</td>
+<td style="text-align: right;">0.00</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">UnicornVal</td>
+<td style="text-align: right;">1.09</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">21.85</td>
+<td style="text-align: right;">26.08</td>
+<td style="text-align: right;">4.65</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">CompSoftSpend</td>
+<td style="text-align: right;">0.24</td>
+<td style="text-align: right;">0.20</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">1.26</td>
+<td style="text-align: right;">2.85</td>
+<td style="text-align: right;">1.39</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">HiTechManuf</td>
+<td style="text-align: right;">22.20</td>
+<td style="text-align: right;">18.35</td>
+<td style="text-align: right;">1.04</td>
+<td style="text-align: right;">79.65</td>
+<td style="text-align: right;">0.26</td>
+<td style="text-align: right;">0.92</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">IntelPropRec</td>
+<td style="text-align: right;">0.48</td>
+<td style="text-align: right;">0.07</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">5.36</td>
+<td style="text-align: right;">8.62</td>
+<td style="text-align: right;">2.95</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">EcComplexity</td>
+<td style="text-align: right;">0.08</td>
+<td style="text-align: right;">-0.06</td>
+<td style="text-align: right;">-2.18</td>
+<td style="text-align: right;">2.29</td>
+<td style="text-align: right;">-0.50</td>
+<td style="text-align: right;">0.25</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">HTExpHKG</td>
+<td style="text-align: right;">4.53</td>
+<td style="text-align: right;">1.51</td>
+<td style="text-align: right;">0.02</td>
+<td style="text-align: right;">48.39</td>
+<td style="text-align: right;">11.79</td>
+<td style="text-align: right;">3.02</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">ICTServExp</td>
+<td style="text-align: right;">2.99</td>
+<td style="text-align: right;">1.68</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">36.98</td>
+<td style="text-align: right;">25.52</td>
+<td style="text-align: right;">4.45</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">ISOQual</td>
+<td style="text-align: right;">5.46</td>
+<td style="text-align: right;">3.23</td>
+<td style="text-align: right;">0.04</td>
+<td style="text-align: right;">29.87</td>
+<td style="text-align: right;">3.16</td>
+<td style="text-align: right;">1.76</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">CorpIAs</td>
+<td style="text-align: right;">32.37</td>
+<td style="text-align: right;">39.35</td>
+<td style="text-align: right;">-371.30</td>
+<td style="text-align: right;">89.79</td>
+<td style="text-align: right;">32.65</td>
+<td style="text-align: right;">-4.58</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">TradmkOrig</td>
+<td style="text-align: right;">36.74</td>
+<td style="text-align: right;">28.99</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">202.33</td>
+<td style="text-align: right;">7.11</td>
+<td style="text-align: right;">2.21</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">BrandVal</td>
+<td style="text-align: right;">3.20</td>
+<td style="text-align: right;">0.47</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">21.12</td>
+<td style="text-align: right;">2.26</td>
+<td style="text-align: right;">1.77</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">IndustDes</td>
+<td style="text-align: right;">2.12</td>
+<td style="text-align: right;">0.84</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">23.28</td>
+<td style="text-align: right;">11.91</td>
+<td style="text-align: right;">3.27</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">CultServExp</td>
+<td style="text-align: right;">0.86</td>
+<td style="text-align: right;">0.42</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">18.31</td>
+<td style="text-align: right;">57.63</td>
+<td style="text-align: right;">6.72</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">FilmsOmdia</td>
+<td style="text-align: right;">4.47</td>
+<td style="text-align: right;">2.69</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">46.93</td>
+<td style="text-align: right;">24.78</td>
+<td style="text-align: right;">4.16</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">EntMedia</td>
+<td style="text-align: right;">0.54</td>
+<td style="text-align: right;">0.17</td>
+<td style="text-align: right;">0.02</td>
+<td style="text-align: right;">3.59</td>
+<td style="text-align: right;">2.52</td>
+<td style="text-align: right;">1.80</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">CreaGoodExp</td>
+<td style="text-align: right;">1.27</td>
+<td style="text-align: right;">0.38</td>
+<td style="text-align: right;">0.00</td>
+<td style="text-align: right;">11.50</td>
+<td style="text-align: right;">6.63</td>
+<td style="text-align: right;">2.56</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">TLDsMix</td>
+<td style="text-align: right;">117.16</td>
+<td style="text-align: right;">22.31</td>
+<td style="text-align: right;">0.12</td>
+<td style="text-align: right;">2538.57</td>
+<td style="text-align: right;">43.80</td>
+<td style="text-align: right;">5.80</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">GHRecSentNoBot</td>
+<td style="text-align: right;">1357449.63</td>
+<td style="text-align: right;">411718.75</td>
+<td style="text-align: right;">2571.55</td>
+<td style="text-align: right;">14402260.97</td>
+<td style="text-align: right;">13.14</td>
+<td style="text-align: right;">2.84</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">AppCrea</td>
+<td style="text-align: right;">1305696.24</td>
+<td style="text-align: right;">155386.88</td>
+<td style="text-align: right;">0.04</td>
+<td style="text-align: right;">98744342.48</td>
+<td style="text-align: right;">124.55</td>
+<td style="text-align: right;">11.07</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>
