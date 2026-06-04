@@ -2,10 +2,11 @@
 title: "GII Index Reduction Analysis Report"
 author: "GII Analysis Team"
 date: "`r Sys.Date()`"
-output: 
-  word_document:
+format:
+  pdf:
     toc: true
-    toc_depth: 3
+    number-sections: true
+    colorlinks: true
 ---
 
 # Executive Summary
@@ -41,7 +42,7 @@ $$ r_m = \sqrt{ \frac{\sum_{i=1}^{p}\lambda_i r_{mi}^2} {\sum_{j=1}^{p}\lambda_j
 where:
 - $\lambda_i$ is the eigenvalue of principal component $i$ from the full dataset (representing the variance explained by that component)
 - $m$ indexes a specific candidate subset
-- $r_{mi}^2$ is the coefficient of determination ($R^2$) between principal component $i$ and the candidate subset of variables. Since $PC_{i} is a linear combination of the original variables, the ($R^2$) of the subset measures how well the principle component can be reconstructed from the subset. 
+- $r_{mi}^2$ is the coefficient of determination ($R^2$) between principal component $i$ and the candidate subset of variables. Since $PC_{i}$ is a linear combination of the original variables, the $R^2$ of the subset measures how well the principle component can be reconstructed from the subset. 
 
 Conceptually, this formula computes a weighted average of how well the subset predicts each principal component, with weights given by the variance explained by each component, then normalizes by the total variance. The resulting $r_m^2$ value can be interpreted as the percentage of total variation explained by the subset, providing an intuitive measure of information retention.
 
@@ -71,28 +72,8 @@ This multi-stage approach combines the statistical rigor of stratified sampling 
 
 ## Data Description
 
-**Original Dataset:**
-- 139 countries/regions
-- 78 indicators (after data quality assessment)
-- The data from the GII 2025 edition. 
-
-**Processed Data:**
-- 75 countries with complete data (after case-wise deletion)
-- 50 selected indicators (after data reduction)
-- Standardized using z-scores
-
-## Data Description
-
-**Original Dataset:**
-- 139 countries/regions
-- 78 indicators (after data quality assessment)
-- The data from the GII 2025 edition. 
-
-**Processed Data:**
-- 75 countries with complete data (after case-wise deletion)
-- 50 selected indicators (after data reduction)
-- Standardized using z-scores
-
+- here description of GII 2025 data.
+139 regions across 78 indicators, we impute the missing values using k-NN. 
 
 # Key Findings
 

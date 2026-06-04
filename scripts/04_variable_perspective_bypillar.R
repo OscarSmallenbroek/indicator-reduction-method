@@ -72,7 +72,7 @@ PC_cor <- function(PC, subset_indices, data_pc_matrix, dm_matrix) {
   inputs <- dm_matrix[, subset_indices]
   matrix_for_analysis <- cbind(out, inputs)
   data <- as.data.frame(matrix_for_analysis)
-  model <- lm(out ~ ., data = data)
+  model <- lm(out ~ inputs, data = data)
   model_summary <- summary(model)
   mult_r.squared <- model_summary$r.squared
   return(mult_r.squared)

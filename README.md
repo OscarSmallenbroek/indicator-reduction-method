@@ -30,4 +30,5 @@ The project will follow these steps:
 5. Generation of optimal indicator subsets
 6. Documentation of results and recommendations
 
+Results are documented in the GII Analysis report in the main directory. 
 ```
