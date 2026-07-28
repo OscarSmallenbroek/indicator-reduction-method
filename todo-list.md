@@ -8,7 +8,6 @@
 - differences with Kenneth
     - we do not have time-series, only do one year, so there is no comparison across time. 
 
-
 - outputs required are two main categories
 
 1. Variable perspective (choosing a subset)
@@ -17,13 +16,13 @@
 
 
 2. Country perspective
-    1. Plot the rank correlation of 1000 random subsets of  k variables for k 10% of total variables to 90% with the similarity matrix of the full dataset. (fig 2 in methods and results v3)
-        - save the list of variables that is the best random selection. 
-    2. Exhaustive search: find best variable subset using dissimilarity matrix rank correlation as metric.
+    1. Plot the rank correlation of 1000 random subsets of  k variables for k 10% of total variables to 90% with the similarity matrix of the full dataset. (fig 2 in methods and results v3). DONE
+        - save the list of variables that is the best random selection. DONE
+    2. Exhaustive search: find best variable subset using dissimilarity matrix rank correlation as metric. DONE
         - Searched for an optimal subset using two strategies. 
-            1. included 3 variables per domain (Level 3) or
-            2. 1Include 1 variable per subdomain (Level 2).
-    3. SIMPROF + agglomerative clustering: shows which countries are the same of different based on a latent state. 
+            1. included 3 variables per domain (Level 3) or DONE
+            2. 1Include 1 variable per subdomain (Level 2). DONE
+    3. SIMPROF + agglomerative clustering: shows which countries are the same of different based on a latent state. [check if we are using the same packages and commands as Ken]
         - clustering countries using full dataset and subset. 
             - derive an equiviliance measure within clusters and compare between datasets. Rand Index. 
 
