@@ -111,6 +111,37 @@ knitr::kable(results, caption = "Distance Matrix Comparison by Subset Size", dig
 
 **Finding:** The reduced 44-indicator set produces a coarser but generally consistent clustering structure.
 
+## Country Perspective: Proportional Allocation (Strategies 1a/2a)
+
+Strategies 1 and 2 above allocate a *flat* number of indicators to every pillar (3 each) or sub-pillar (1 each), regardless of how many indicators that group actually contains. Since the GII's pillars range from 6 indicators (Institutions) to 15 (Business sophistication), and sub-pillars range from 2 to 5, a flat allocation over- or under-represents groups relative to their share of the index.
+
+Strategies 1a and 2a instead allocate indicators to pillars (1a) or sub-pillars (2a) proportionally to each group's size, using a largest-remainder (Hamilton) apportionment: each group first receives `floor(share)` indicators, and any leftover budget is handed out one at a time to the groups with the largest fractional remainder. Unlike Strategies 1/2, a group with a very small share of the index can receive zero indicators. The total budget is 42 indicators — about double Strategy 1/2's 21 — chosen so proportionality has room to manifest at the sub-pillar level: with 21 sub-pillars, a 21-indicator budget collapses to exactly 1 per sub-pillar regardless of size, identical to the flat Strategy 2. Within each allocated group, the best-scoring combination of indicators is still found by exhaustive search (maximizing the within-group r_m criterion), exactly as in Strategies 1/2.
+
+### Pillar allocation (Strategy 1a)
+
+```{r}
+strategy1a <- read.csv("outputs/exhaustive_strategy1a_pillar.csv")
+knitr::kable(strategy1a, caption = "Strategy 1a: proportional allocation across pillars", digits = 3)
+```
+
+### Sub-pillar allocation (Strategy 2a)
+
+```{r}
+strategy2a <- read.csv("outputs/exhaustive_strategy2a_subpillar.csv")
+knitr::kable(strategy2a, caption = "Strategy 2a: proportional allocation across sub-pillars", digits = 3)
+```
+
+**Finding:** At the same 42-indicator budget, Strategy 1a (pillar-level proportional allocation) achieves a rank correlation of `r round(strategy1a$correlation[1], 3)` with the full distance matrix, compared to `r round(strategy2a$correlation[1], 3)` for Strategy 2a (sub-pillar-level). Strategy 1a was therefore used for the SIMPROF clustering comparison below.
+
+```{r}
+rand_index_proportional <- read.csv("outputs/clustering_rand_index_proportional.csv")
+knitr::kable(rand_index_proportional, caption = "Rand Index: full clustering vs. proportional-subset clustering", digits = 3)
+```
+
+**Finding:** The proportional subset (`r rand_index_proportional$n_indicators_subset[1]` indicators, `r rand_index_proportional$strategy[1]`) recovers a Rand Index of `r round(rand_index_proportional$rand_index[1], 3)` against the full-data clustering.
+
+At double the indicator budget (42 vs. 21), the proportional strategies' rank correlation (0.94 for 1a) is well above the flat Strategy 1/2 result (0.83–0.84 at 21 indicators). This is partly a budget-size effect rather than proof that proportional allocation beats flat allocation: the Fig 2 random-subset baseline shows a *random* 46-indicator subset already averages ~0.94 correlation, so this comparison does not yet show proportional allocation outperforming random selection by a wide margin. A direct test of proportional vs. flat allocation would need to compare them at matched budgets (e.g. both at 21, or both at 42).
+
 ## PCA Analysis
 
 The table below shows the number of principal components needed to capture specified levels of variance:

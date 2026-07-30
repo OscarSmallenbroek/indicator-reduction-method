@@ -108,8 +108,10 @@ get_pca_components <- function(data, threshold = 0.95) {
 #' @param imeta Metadata data frame
 #' @return Vector of indicator codes
 pillar_indicators <- function(pillar_code, imeta) {
+  # NUM (e.g. "IN.1.1.1") embeds the pillar code; Parent only holds the
+  # direct sub-pillar parent, so it can't be used to match pillar level.
   imeta %>%
-    filter(Level == 1 & grepl(pillar_code, Parent)) %>%
+    filter(Level == 1 & grepl(pillar_code, NUM, fixed = TRUE)) %>%
     pull(iCode)
 }
 
@@ -202,133 +204,167 @@ best_k_within_group <- function(k, group_codes, imeta, data, level = 3) {
   return(result_df)
 }
 
-#' Run hierarchical clustering with silhouette-based optimal k
-#' Uses base R + cluster package (no clustsig required)
-#' @param data Data matrix (rows = observations, cols = variables)
-#' @param method.cluster Clustering method for hclust (default: "average")
-#' @param method.distance Distance method for dist (default: "euclidean")
-#' @param max_k Maximum number of clusters to consider (default: 15)
-#' @return List with hclust result, cluster assignments, and number of groups
-run_simprof <- function(data, 
-                        method.cluster = "average",
-                        method.distance = "euclidean",
-                        max_k = 15, ...) {
-  # Compute distance matrix
-  d <- dist(data, method = method.distance)
-  
-  # Perform hierarchical clustering
-  hc <- hclust(d, method = method.cluster)
-  
-  # Determine optimal number of clusters using silhouette width
-  n_obs <- nrow(data)
-  k_range <- 2:min(max_k, n_obs - 1)
-  
-  if (length(k_range) < 1) {
-    n_clusters <- 1
+#' Get the Level-1 indicator codes belonging to a pillar or sub-pillar group
+#' @param group_code Group code (e.g. "IN.1" for level 3, "SP1.1" for level 2)
+#' @param imeta Metadata data frame
+#' @param level Level to group by (3 for pillar, 2 for sub-pillar)
+#' @return Vector of indicator codes
+group_variables <- function(group_code, imeta, level = 3) {
+  if (level == 3) {
+    # NUM (e.g. "IN.1.1.1") embeds the pillar code; Parent only holds the
+    # direct sub-pillar parent, so it can't be used to match pillar level.
+    imeta %>%
+      filter(Level == 1 & grepl(group_code, NUM, fixed = TRUE)) %>%
+      pull(iCode)
+  } else if (level == 2) {
+    imeta %>%
+      filter(Level == 1 & Parent == group_code) %>%
+      pull(iCode)
   } else {
-    sil_widths <- sapply(k_range, function(k) {
-      cl <- cutree(hc, k = k)
-      if (length(unique(cl)) < 2) return(0)
-      sil <- cluster::silhouette(cl, d)
-      mean(sil[, 3])
-    })
-    n_clusters <- k_range[which.max(sil_widths)]
+    stop("Level must be 2 (sub-pillar) or 3 (pillar)")
   }
-  
-  # Cut tree at optimal number of clusters
-  clusters <- cutree(hc, k = n_clusters)
-  
-  # Build cluster list in simprof-like format
-  cluster_list <- list()
-  for (i in 1:n_clusters) {
-    cluster_list[[i]] <- as.character(which(clusters == i))
-  }
-  
-  # Return object with simprof-compatible structure
-  result <- list(
-    hclust = hc,
-    numgroups = n_clusters,
-    significantclusters = cluster_list,
-    cluster_assignments = clusters,
-    nclusters = n_clusters,
-    silhouette_widths = if (length(k_range) > 0) {
-      setNames(sil_widths, k_range)
-    } else {
-      NA
-    }
-  )
-  class(result) <- "simprof_compat"
-  
-  return(result)
 }
 
-#' Calculate Rand Index between two cluster assignments
-#' Uses base R only (no partitionComparison required)
-#' @param res1 First clustering result (must have cluster_assignments)
-#' @param res2 Second clustering result
-#' @return Rand Index value (numeric between 0 and 1)
-rand_index_from_simprof <- function(res1, res2) {
-  # Extract cluster assignments
-  cl1 <- res1$cluster_assignments
-  cl2 <- res2$cluster_assignments
-  
-  n <- length(cl1)
-  total_pairs <- n * (n - 1) / 2
-  
-  # Count agreements: pairs in same cluster in both OR different in both
-  agreements <- 0
-  for (i in 1:(n - 1)) {
-    for (j in (i + 1):n) {
-      if ((cl1[i] == cl1[j] && cl2[i] == cl2[j]) || 
-          (cl1[i] != cl1[j] && cl2[i] != cl2[j])) {
-        agreements <- agreements + 1
+#' Count Level-1 indicators per group
+#' @param group_codes Vector of group codes
+#' @param imeta Metadata data frame
+#' @param level Level to group by (3 for pillar, 2 for sub-pillar)
+#' @return Named integer vector of counts, one per group_code
+group_indicator_counts <- function(group_codes, imeta, level = 3) {
+  counts <- sapply(group_codes, function(g) length(group_variables(g, imeta, level)))
+  names(counts) <- group_codes
+  counts
+}
+
+#' Largest-remainder (Hamilton) apportionment of a target total across groups,
+#' proportional to each group's number of Level-1 indicators.
+#' Unlike proportional_allocation(), no group is guaranteed a minimum of 1 -
+#' a group with a very small share of the total can receive zero, and groups
+#' with the largest share get first claim on leftover budget.
+#' @param target Target total number of indicators to allocate
+#' @param imeta Metadata data frame
+#' @param group_codes Vector of group codes (pillar or sub-pillar codes)
+#' @param level Level to group by (3 for pillar, 2 for sub-pillar)
+#' @return Named integer vector of allocations, one per group_code (may include 0s)
+largest_remainder_allocation <- function(target, imeta, group_codes, level = 3) {
+  counts <- group_indicator_counts(group_codes, imeta, level)
+  total <- sum(counts)
+
+  if (target > total) {
+    stop("Target (", target, ") exceeds total available indicators (", total, ")")
+  }
+
+  share <- counts / total * target
+  allocation <- floor(share)
+  remainder <- target - sum(allocation)
+
+  if (remainder > 0) {
+    frac <- share - allocation
+    # Groups with the largest fractional remainder get the leftover budget first.
+    # Since remainder < length(group_codes) and floor(share) < counts whenever
+    # frac > 0, this never allocates more than a group's indicator count.
+    top_groups <- names(counts)[order(frac, decreasing = TRUE)][seq_len(remainder)]
+    allocation[top_groups] <- allocation[top_groups] + 1
+  }
+
+  allocation
+}
+
+#' Exhaustive search for the best subset within each group, using a
+#' per-group allocation (e.g. from largest_remainder_allocation()) instead
+#' of a single k applied uniformly to every group. Groups allocated 0 are skipped.
+#' @param allocation Named vector of group_code -> k (number of variables to select)
+#' @param imeta Metadata data frame
+#' @param data Standardized indicator data
+#' @param level Level to group by (3 for pillar, 2 for sub-pillar)
+#' @return Data frame with best variables and their r_m score per group
+best_allocation_within_group <- function(allocation, imeta, data, level = 3) {
+  best_results <- list()
+
+  for (group_code in names(allocation)) {
+    k <- allocation[[group_code]]
+    if (k == 0) next
+
+    variables <- group_variables(group_code, imeta, level)
+    nc_var <- length(variables)
+
+    if (nc_var > k) {
+      # Need to search
+      dm_sub <- as.matrix(data[, variables, drop = FALSE])
+      n_var_sub <- min(nc_var, 27)  # Limit as in original code
+      pca_result_sub <- prcomp(dm_sub, center = TRUE, scale. = TRUE)
+      eig_values_sub <- pca_result_sub$sdev^2
+      pcm_sub <- as.matrix(pca_result_sub$rotation)
+      data_pc_sub <- dm_sub %*% pcm_sub
+
+      combos <- combn(1:nc_var, k, simplify = FALSE)
+      best_rm <- 0
+      best_vars <- NULL
+
+      for (i in seq_along(combos)) {
+        combo <- combos[[i]]
+        s <- r_m_sub(combo, n_var_sub, data_pc_sub, dm_sub, eig_values_sub)
+        if (s > best_rm) {
+          best_rm <- s
+          best_vars <- variables[combo]
+        }
       }
-    }
-  }
-  
-  agreements / total_pairs
-}
 
-#' Calculate within-cluster equivalence from two clustering results
-#' Uses base R only (no partitionComparison required)
-#' @param res1 First clustering result (must have cluster_assignments)
-#' @param res2 Second clustering result
-#' @return Data frame with cluster equivalence measures
-cluster_equivalence <- function(res1, res2) {
-  cl1 <- res1$cluster_assignments
-  cl2 <- res2$cluster_assignments
-  
-  n_clusters <- max(cl1)
-  equivalence_results <- list()
-  
-  for (i in 1:n_clusters) {
-    items_in_cluster_i <- which(cl1 == i)
-    
-    if (length(items_in_cluster_i) > 0) {
-      # What clusters are these items in res2?
-      clusters_in_res2 <- unique(cl2[items_in_cluster_i])
-      
-      # Calculate proportion in each res2 cluster
-      prop_in_each <- sapply(clusters_in_res2, function(clust) {
-        sum(cl2[items_in_cluster_i] == clust) / length(items_in_cluster_i)
-      })
-      
-      # Maximum proportion (purity)
-      max_prop <- max(prop_in_each)
-      dominant_cluster <- clusters_in_res2[which.max(prop_in_each)]
-      
-      equivalence_results[[i]] <- data.frame(
-        cluster_res1 = i,
-        size = length(items_in_cluster_i),
-        purity = max_prop,
-        dominant_cluster_res2 = dominant_cluster,
+      best_results[[group_code]] <- data.frame(
+        group = group_code,
+        allocated = k,
+        best_rm = best_rm,
+        variables = paste(sort(best_vars), collapse = ","),
+        stringsAsFactors = FALSE
+      )
+    } else {
+      # Take all variables if the group has <= k indicators
+      best_results[[group_code]] <- data.frame(
+        group = group_code,
+        allocated = nc_var,
+        best_rm = 1.0,  # Perfect score when taking all
+        variables = paste(sort(variables), collapse = ","),
         stringsAsFactors = FALSE
       )
     }
   }
-  
-  do.call(rbind, equivalence_results)
+
+  bind_rows(best_results)
 }
+
+# use simprof from the clustig package
+
+
+#' Calculate Rand Index between two cluster assignments
+## Define a function to calculate the Rand Index for two clusters
+## Uses the results from simprof()
+## Cluster format needs adjusting
+
+rand_ind <- function(cluster_results1,cluster_results2) {
+  nclust1 <- cluster_results1$numgroups
+  cluster1 <- cluster_results1$significantclusters
+  nclust2 <- cluster_results2$numgroups
+  cluster2 <- cluster_results2$significantclusters
+  cluster_array1 <- rep(0,27)
+  cluster_array2 <- rep(0,27)
+  for (i in 1:nclust1) {
+    for (j in 1:length(cluster1[[i]])){
+      sample <- as.integer(cluster1[[i]][j])
+      cluster_array1[sample] <- i
+    }
+  }
+  for (i in 1:nclust2) {
+    for (j in 1:length(cluster2[[i]])){
+      sample <- as.integer(cluster2[[i]][j])
+      cluster_array2[sample] <- i
+    }
+  }
+  # Register the measures to take ANY input (no clue)
+  registerPartitionVectorSignatures(environment())
+  # Compare the clusters without EU27 (11th item)
+  return(partitionComparison::randIndex(cluster_array1[-11], cluster_array2[-11]))
+}
+
 
 #' Proportional allocation of samples across groups
 #' @param target Target total sample size

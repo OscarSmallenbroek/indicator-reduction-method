@@ -34,7 +34,12 @@ CONFIG <- list(
   # Exhaustive search strategies
   exhaustive = list(
     strategy1_k_per_pillar = 3,   # 3 vars per pillar (Level 3) -> 7 * 3 = 21 vars
-    strategy2_k_per_subpillar = 1  # 1 var per sub-pillar (Level 2) -> 21 * 1 = 21 vars
+    strategy2_k_per_subpillar = 1,  # 1 var per sub-pillar (Level 2) -> 21 * 1 = 21 vars
+    # Strategies 1a/2a: total budget allocated proportionally to group size
+    # (largest-remainder method) instead of a flat k per group. 42 (~2/sub-pillar
+    # on average) gives sub-pillar allocation real room to vary instead of
+    # collapsing to 1-per-group.
+    proportional_target = 42
   ),
 
   # Figure 2: Random subset correlations
