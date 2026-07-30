@@ -1,0 +1,4 @@
+# Vendored clustsig package copies - install from CRAN or
+# remotes::install_github("douglaswhitaker/clustsig") instead of tracking these
+Example/clustsig/
+Example/clustsig-optimization/

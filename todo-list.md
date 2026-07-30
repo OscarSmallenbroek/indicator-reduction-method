@@ -24,7 +24,8 @@
             2. 1Include 1 variable per subdomain (Level 2). DONE
     3. SIMPROF + agglomerative clustering: shows which countries are the same of different based on a latent state. [check if we are using the same packages and commands as Ken]
         - clustering countries using full dataset and subset. 
-            - derive an equiviliance measure within clusters and compare between datasets. Rand Index. 
+            - derive an equiviliance measure within clusters and compare between datasets Rand Index. DONE
+    4. write up
 
 
 # functions required

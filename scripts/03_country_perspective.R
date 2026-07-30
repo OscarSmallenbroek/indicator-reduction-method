@@ -13,7 +13,8 @@
 # Load required libraries
 library(dplyr)
 library(cluster)   # for silhouette()
-
+#remotes::install_github("douglaswhitaker/clustsig")
+library(clustsig)
 # Source shared functions and config
 source("scripts/R/config.R")
 source("scripts/R/functions.R")
@@ -197,8 +198,10 @@ print("\n=== SIMPROF + AGGLOMERATIVE CLUSTERING ===")
 
 # Run hierarchical clustering on full dataset
 print("Running clustering on full dataset (all indicators)...")
-full_results <- run_simprof(
+full_results <- simprof(
   indicator_data,
+  num.expected=1000, num.simulated=999,
+  method.transform="identity", alpha=0.05, 
   method.cluster = CONFIG$clustering$method_cluster,
   method.distance = CONFIG$clustering$method_dist
 )
@@ -206,8 +209,10 @@ full_results <- run_simprof(
 # Run hierarchical clustering on subset dataset
 print("Running clustering on subset dataset...")
 subset_data <- indicator_data[, best_strategy_vars, drop = FALSE]
-subset_results <- run_simprof(
+subset_results <- simprof(
   subset_data,
+  num.expected=1000, num.simulated=999,
+  method.transform="identity", alpha=0.05, 
   method.cluster = CONFIG$clustering$method_cluster,
   method.distance = CONFIG$clustering$method_dist
 )
@@ -223,7 +228,7 @@ print(paste("Subset clustering results saved to:", subset_simprof_file))
 
 # Calculate Rand Index
 print("Calculating Rand Index...")
-rand_idx <- rand_index_from_simprof(full_results, subset_results)
+rand_idx <- rand_ind(full_results, subset_results)
 print(paste("Rand Index:", round(rand_idx, 4)))
 
 # Save Rand Index
@@ -236,28 +241,7 @@ rand_index_df <- data.frame(
   strategy = best_strategy_name,
   stringsAsFactors = FALSE
 )
-write.csv(rand_index_df, rand_index_file, row.names = FALSE)
+  write.csv(rand_index_df, rand_index_file, row.names = FALSE)
 print(paste("Rand Index saved to:", rand_index_file))
-
-# Calculate cluster equivalence
-print("Calculating cluster equivalence...")
-cluster_equiv <- cluster_equivalence(full_results, subset_results)
-cluster_equiv_file <- file.path(CONFIG$paths$outputs_dir, "cluster_equivalence.csv")
-write.csv(cluster_equiv, cluster_equiv_file, row.names = FALSE)
-print(paste("Cluster equivalence saved to:", cluster_equiv_file))
-
-# Print clustering summary
-print("\n=== CLUSTERING SUMMARY ===")
-print(paste("Full dataset clusters:", full_results$numgroups))
-print(paste("Subset dataset clusters:", subset_results$numgroups))
-print(paste("Rand Index:", round(rand_idx, 4)))
-print(paste("Full silhouette widths:"))
-if (!is.null(full_results$silhouette_widths)) {
-  print(round(full_results$silhouette_widths, 3))
-}
-print(paste("Subset silhouette widths:"))
-if (!is.null(subset_results$silhouette_widths)) {
-  print(round(subset_results$silhouette_widths, 3))
-}
 
 print("\n=== Country perspective analysis completed. ===")
