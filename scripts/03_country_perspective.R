@@ -15,6 +15,7 @@ library(dplyr)
 library(cluster)   # for silhouette()
 #remotes::install_github("douglaswhitaker/clustsig")
 library(clustsig)
+library(partitionComparison)  # rand_ind() in functions.R needs this attached
 # Source shared functions and config
 source("scripts/R/config.R")
 source("scripts/R/functions.R")

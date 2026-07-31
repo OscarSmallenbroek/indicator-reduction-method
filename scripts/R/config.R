@@ -76,6 +76,9 @@ CONFIG <- list(
 # Derived values
 CONFIG$fig2$k_values <- round(CONFIG$fig2$k_percentiles * CONFIG$n_indicators)
 CONFIG$fig2$k_values <- unique(pmax(1, pmin(CONFIG$n_indicators - 1, CONFIG$fig2$k_values)))
+# Add k=42 explicitly: matches the proportional strategies' budget (Strategies 1a/2a),
+# so the random-subset baseline can be compared directly at that exact size.
+CONFIG$fig2$k_values <- sort(unique(c(CONFIG$fig2$k_values, CONFIG$exhaustive$proportional_target)))
 
 # Print config summary on load
 message("GII Analysis Config loaded:")
