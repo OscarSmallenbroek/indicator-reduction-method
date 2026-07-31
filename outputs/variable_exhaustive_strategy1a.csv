@@ -1,0 +1,8 @@
+"group","allocated","best_rm","variables","r_m"
+"IN.1",3,0.964616697158185,"EntreprenPCplus,PolicyDB,RegQua",0.962500391993835
+"IN.2",6,0.897672021081771,"ExpEdu,RDCompExp,ResPPop,SciEngGrad,TertEnrol,TertMob",0.962500391993835
+"IN.3",5,0.900036130609734,"GDPEner,GroCap,ICTAccWIPO5G20,ISOEnv,LowCarbonEner",0.962500391993835
+"IN.4",6,0.925671332733756,"AppTariffWTO,HHI,JointVenPB,LateVCInt,MarkCap,MicroLoanIMFFAS",0.962500391993835
+"IN.5",8,0.931615113384167,"Demogdividend,FDINetInfl,GERDPerf,HiTechImp,ICTSevImp,IntelPropPay,PatFam,StatClustDev",0.962500391993835
+"OUT.6",8,0.915448316623037,"CompSoftSpend,GrowPPP,HTExpHKG,ICTServExp,ISOQual,PCTInventors,UnicornVal,UtilModOrig",0.962500391993835
+"OUT.7",6,0.864587818933043,"AppCrea,CorpIAs,CreaGoodExp,EntMedia,FilmsOmdia,TradmkOrig",0.962500391993835
