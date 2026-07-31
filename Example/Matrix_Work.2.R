@@ -151,7 +151,7 @@ rand_ind <- function(cluster_results1,cluster_results2) {
   # Register the measures to take ANY input (no clue)
   registerPartitionVectorSignatures(environment())
   # Compare the clusters without EU27 (11th item)
-  return(randIndex(cluster_array1[-11], cluster_array2[-11]))
+  return(partitionComparison::randIndex(cluster_array1[-11], cluster_array2[-11]))
 }
 
 rand_ind(broad_results,narrow_results)

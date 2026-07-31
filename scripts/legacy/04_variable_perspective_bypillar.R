@@ -10,34 +10,32 @@ print(paste("Loaded data with", nrow(data_standardized), "countries and", ncol(d
 # Prepare data for analysis (exclude Country column)
 country_names <- data_standardized$Country
 indicator_data <- data_standardized[, -1]  # Remove Country column
-variable_names <- colnames(indicator_data)
-
 # Load the metadata to identify pillars
 imeta <- read.csv("gii-data/imeta.csv", stringsAsFactors = FALSE)
-
 # Extract indicators (rows where Level == 1)
 indicators <- imeta[imeta$Level == 1, ]
 
-# Create a mapping from iCode to NUM
-indicator_num_map <- indicators$NUM
-names(indicator_num_map) <- indicators$iCode
+# Ensure that alll indicators have a positive direction
+rev_indicators<-imeta$iCode[imeta$Direction== -1]
+indicator_data<-indicator_data |> 
+  mutate(across(all_of(rev_indicators), ~ max(.) - .))
 
-# Get the indices of indicators in the data that correspond to each pillar (IN.1 to IN.5 and OUT.6 to OUT.7)
-pillar_indicators <- list()
-for (pillar in c("IN.1", "IN.2", "IN.3", "IN.4", "IN.5", "OUT.6", "OUT.7")) {
-  # Find all indicators that belong to this pillar (NUM starts with the pillar code)
-  pillar_indicator_codes <- indicators[grep(paste0("^", pillar), indicators$NUM), "iCode"]
-  
-  # Get the corresponding column indices in our data
-  pillar_indices <- which(variable_names %in% pillar_indicator_codes)
-  pillar_indicators[[pillar]] <- pillar_indices
-}
+# remove all aggregates from the dataset - pillars, sub-index etc.
+indicator_data<-indicator_data |> 
+  select(all_of(indicators$iCode))
+variable_names <- colnames(indicator_data)
+
 
 print("Performing PCA analysis...")
 
-# Perform PCA on the full dataset
+# Perform PCA on the full dataset -----
 pca_result <- prcomp(indicator_data, center = TRUE, scale. = TRUE)
 summary_pca <- summary(pca_result)
+
+saveRDS(pca_result, 
+      file.path( 'outputs', 'pca_fullGII.rds'))
+saveRDS(summary_pca, 
+      file.path( 'outputs', 'summary_pca_fullGII.rds'))
 
 # Eigenvalues in decreasing order
 eig_values <- pca_result$sdev^2
@@ -47,15 +45,9 @@ print(paste("Number of principal components:", length(eig_values)))
 print("Proportion of variance explained by first 10 components:")
 print(round(summary_pca$importance[2, 1:min(10, length(eig_values))], 4))
 
-# Calculate cumulative variance explained
-cumulative_variance <- cumsum(summary_pca$importance[2, ])
-components_80_pct <- which(cumulative_variance >= 0.8)[1]
-components_90_pct <- which(cumulative_variance >= 0.9)[1]
-components_95_pct <- which(cumulative_variance >= 0.95)[1]
 
-print(paste("Components needed for 80% variance:", components_80_pct))
-print(paste("Components needed for 90% variance:", components_90_pct))
-print(paste("Components needed for 95% variance:", components_95_pct))
+# testing subsets  ---------------
+
 
 # Function to calculate weighted r_m for a proposed subset of variables
 # This implements Equation 1 from the manuscript:
@@ -64,7 +56,7 @@ print(paste("Components needed for 95% variance:", components_95_pct))
 # First, we need matrices for multiplication
 dm <- as.matrix(indicator_data)
 pcm <- as.matrix(pca_result$rotation)
-data_pc <- dm %*% pcm
+data_pc <- dm %*% pcm  # these are scores on all PCs 
 
 # Function to find the multiple correlation between a PC and a subset of variables
 PC_cor <- function(PC, subset_indices, data_pc_matrix, dm_matrix) {
@@ -72,7 +64,8 @@ PC_cor <- function(PC, subset_indices, data_pc_matrix, dm_matrix) {
   inputs <- dm_matrix[, subset_indices]
   matrix_for_analysis <- cbind(out, inputs)
   data <- as.data.frame(matrix_for_analysis)
-  model <- lm(out ~ inputs, data = data)
+
+  model <- lm(out ~ . , data = data)
   model_summary <- summary(model)
   mult_r.squared <- model_summary$r.squared
   return(mult_r.squared)
@@ -80,10 +73,12 @@ PC_cor <- function(PC, subset_indices, data_pc_matrix, dm_matrix) {
 
 
 # Create a data frame with pillar information
-pillar_df <- data.frame(
-  pillar_name = names(pillar_indicators),
-  n_indicators = sapply(pillar_indicators, length)
-)
+pillar_df <- imeta |> 
+  filter(Level == 1) |>  # only indicators
+  mutate(pillar_name = substr(Parent, 2,3)) |> 
+  group_by(pillar_name) |> 
+  summarise(n_indicators  = n())
+
 # Calculate percentage of total indicators for each pillar
 pillar_df$percent_of_total <- pillar_df$n_indicators / sum(pillar_df$n_indicators) * 100
 
@@ -116,12 +111,18 @@ calculate_allocation <- function(target_size) {
   return(allocation)
 }
 calculate_allocation(20)
-    
+
+# Create an exmple for the manuscript. 
+allocate20<-cbind(pillar_df, calculate_allocation(20))
+names(allocate20)[4]<-'allocation'
+saveRDS(allocate20, file.path('outputs', 'allocation20.rds'))
+
+
 # Add the allocation to the pillar data frame
 # This part will be used in the sampling loop
 pillar_df$allocation <- 0  # Initialize
 
-# Corrected, fully implemented r_m function
+# r_m function ------
 r_m <- function(subset_indices, data_pc_matrix, dm_matrix, eig_values_vector) {
   r_sum <- 0
   n_components <- min(length(eig_values_vector), ncol(data_pc_matrix))
@@ -144,7 +145,22 @@ r_m_results <- data.frame(
   mean_r_m = numeric(length(subset_sizes)),
   max_r_m = numeric(length(subset_sizes))
 )
+s
+# a function to get the pillar' indicators indexes in the data set
+pillar_indicators<-function(pillar){
 
+  imeta |> 
+    filter(Level == 1) |> 
+    filter(grepl(pillar, Parent)) |> 
+    pull(iCode)
+
+}
+
+#test function 
+indicator_data[,pillar_indicators("P1")]
+
+# Have to make sure not sample with replacement! 
+# IN correlation and cluster based sampling it can select same indicator twice. 
 for (i in 1:length(subset_sizes)) {
   size <- subset_sizes[i]
   print(paste("Testing subset size:", size))
@@ -156,23 +172,24 @@ for (i in 1:length(subset_sizes)) {
     selected_indices <- c()
 
     # 1. Compute proportional allocation: sample from each pillar by size
-    allocation<-calculate_allocation(size)
-    # 2. Sample from each pillar according to allocation
+    allocation <- calculate_allocation(size)
+
+    # 2. Sample from each pillar according to allocation, ensuring no replacement within pillar
     for (pillar in names(allocation)) {
       n_to_sample <- allocation[pillar]
-      pillar_idx <- pillar_indicators[[pillar]]
+      pillar_idx <- pillar_indicators(pillar)
 
       # Handle case where pillar has only one indicator or we need only one
       if (n_to_sample == 1 || length(pillar_idx) == 1) {
         # Just sample one if only needed
-        selected_pillar_ind <- sample(pillar_idx, 1)
+        selected_pillar_ind <- sample(pillar_idx, 1, replace = FALSE)
         selected_indices <- c(selected_indices, selected_pillar_ind)
       } else {
         # Use correlation-based clustering within the pillar
         sub_data <- indicator_data[, pillar_idx, drop = FALSE]
         if (nrow(sub_data) < 2 || ncol(sub_data) < 2) {
-          # If not enough data, sample randomly
-          selected_indices <- c(selected_indices, sample(pillar_idx, n_to_sample))
+          # If not enough data, sample randomly without replacement
+          selected_indices <- c(selected_indices, sample(pillar_idx, n_to_sample, replace = FALSE))
         } else {
           # Compute correlation matrix and cluster
           cor_mat <- cor(sub_data)
@@ -187,12 +204,12 @@ for (i in 1:length(subset_sizes)) {
           for (cluster_id in sample(unique(clusters))) {  # shuffle cluster order
             cluster_vars <- pillar_idx[clusters == cluster_id]
             if (length(cluster_vars) > 0) {
-              selected_from_pillar <- c(selected_from_pillar, sample(cluster_vars, 1))
+              selected_from_pillar <- c(selected_from_pillar, sample(cluster_vars, 1, replace = FALSE))
               if (length(selected_from_pillar) >= n_to_sample) break
             }
           }
 
-          # If not enough selected, add randomly
+          # If not enough selected, add remaining ones without replacement
           if (length(selected_from_pillar) < n_to_sample) {
             remaining <- setdiff(pillar_idx, selected_from_pillar)
             additional <- sample(remaining, n_to_sample - length(selected_from_pillar), replace = FALSE)
@@ -204,71 +221,20 @@ for (i in 1:length(subset_sizes)) {
       }
     }
 
-    r_m_values[j] <- r_m(selected_indices, data_pc, dm, eig_values)
+    # Compute r_m for this subset and store
+    r_m_values[j]$r_m <- r_m(selected_indices, data_pc, dm, eig_values)
+    r_m_values[j]$indicators<-selected_indices
   }
-  
-  r_m_results$mean_r_m[i] <- mean(r_m_values)
-  r_m_results$max_r_m[i] <- max(r_m_values)
+
+  r_m_results$mean_r_m[i] <- mean(r_m_values$r_m )
+  r_m_results$max_r_m[i] <- max(r_m_values$r_m )    
+  r_m_results_full[i]<=r_m_values
   
   print(paste("  Mean r_m:", round(mean(r_m_values), 4)))
   print(paste("  Max r_m:", round(max(r_m_values), 4)))
 }
-
 print("Variable subset size comparison results (r_m):")
 print(r_m_results)
 
 # Save results
 write.csv(r_m_results, "outputs/r_m_subset_size_comparison.csv", row.names = FALSE)
-
-# Identify a good subset using a simpler approach (rather than full greedy)
-print("Identifying a good subset of 15 variables...")
-
-# For computational efficiency, we'll use a correlation-based approach
-# Select variables that are most representative of the dataset, ensuring one from each pillar first
-
-# Calculate the average absolute correlation of each variable with all others
-cor_matrix <- cor(indicator_data)
-mean_abs_cor <- apply(cor_matrix, 2, function(x) mean(abs(x)))
-
-# Start with one indicator from each pillar that has the highest mean correlation
-selected_indices <- c()
-for (pillar in c("IN.1", "IN.2", "IN.3", "IN.4", "IN.5", "OUT.6", "OUT.7")) {
-  pillar_indicator_indices <- pillar_indicators[[pillar]]
-  pillar_var_names <- variable_names[pillar_indicator_indices]
-  # Get mean correlation for these variables
-  pillar_mean_cor <- mean_abs_cor[pillar_var_names]
-  # Select the variable with highest mean correlation
-  best_var <- names(which.max(pillar_mean_cor))
-  selected_indices <- c(selected_indices, which(variable_names == best_var))
-}
-
-# Now select the remaining 8 variables (to reach 15) with highest mean correlation 
-# among the remaining variables
-remaining_vars <- setdiff(variable_names, variable_names[selected_indices])
-remaining_mean_cor <- mean_abs_cor[remaining_vars]
-top_remaining <- names(sort(remaining_mean_cor, decreasing = TRUE)[1:8])
-selected_indices <- c(selected_indices, which(variable_names %in% top_remaining))
-
-top_15_r_m <- r_m(selected_indices, data_pc, dm, eig_values)
-
-print(paste("Top 15 variables by correlation r_m:", round(top_15_r_m, 4)))
-print("Selected variables (by index):")
-print(selected_indices)
-
-# Get variable names for the selected indices
-print("Selected variables (by name):")
-selected_variable_names <- variable_names[selected_indices]
-print(selected_variable_names)
-
-# Save the subset information
-optimal_subset_info <- data.frame(
-  index = selected_indices,
-  variable_name = selected_variable_names
-)
-write.csv(optimal_subset_info, "outputs/optimal_15_variable_subset_bypillar.csv", row.names = FALSE)
-
-# Also save just the variable names for easy reference
-write.csv(selected_variable_names, "outputs/selected_variables_bypillar.csv",
- row.names = FALSE)
-
-print("Variable perspective analysis completed.")

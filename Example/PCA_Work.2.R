@@ -110,6 +110,31 @@ Components <- Components[-6]
 
 ## Sub versions of the main functions
 ## Given a component, must subset the data and find the new PCs
+#' Compute Multiple Squared Correlation for a Principal Component and Variable Subset
+#'
+#' This function computes the multiple squared correlation (R-squared) between
+#' a specified principal component (PC) and a subset of explanatory variables
+#' within a sub-dataset. The R-squared value reflects how much variance in the
+#' given PC is explained by the selected variables using a linear model.
+#'
+#' @param PC Integer index specifying which principal component to analyze.
+#' @param subset Character vector or integer indices indicating the subset of variables
+#'   to include in the regression model.
+#' @param data_pc_sub Matrix or data frame containing principal component scores
+#'   (for all components) derived from a sub-dataset.
+#' @param dm_sub Matrix or data frame containing the original scaled variables
+#'   (excluding response) corresponding to the sub-dataset. Used as predictors.
+#'
+#' @return Numeric value representing the multiple R-squared from regressing
+#'   the specified PC on the given subset of variables.
+#'
+#' @details This function is intended for internal use during variable selection strategies,
+#'   particularly when evaluating how well subsets of variables reconstruct principal
+#'   components. It mirrors `PC_cor` but operates on subsetted data structures.
+#'
+#' @example
+#' # Suppose data_pc_sub and dm_sub are already computed for a subset
+#' PC_cor_sub(PC = 1, subset = c("Var1", "Var2"), data_pc_sub, dm_sub)
 PC_cor_sub <- function(PC,subset,data_pc_sub, dm_sub){
   out <- data_pc_sub[,PC]
   inputs <- dm_sub[,subset]
