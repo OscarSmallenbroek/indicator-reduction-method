@@ -89,9 +89,9 @@ scripts/
 | `outputs/exhaustive_strategy1_pillar.csv` | 03_country_perspective.R | 3 per pillar |
 | `outputs/exhaustive_strategy2_subpillar.csv` | 03_country_perspective.R | 1 per sub-pillar |
 | `outputs/exhaustive_combined_subsets.csv` | 03_country_perspective.R | Combined 21-var subsets |
-| `outputs/clustering_rand_index.csv` | 03_country_perspective.R | Rand Index |
+| `outputs/clustering_rand_index.csv` | 03_country_perspective.R | Rand Index (all strategies) |
 | `outputs/clustering_full.rds` | 03_country_perspective.R | Full simprof |
-| `outputs/clustering_subset.rds` | 03_country_perspective.R | Subset simprof |
+| `outputs/clustering_subset_<Strategy>.rds` | 03_country_perspective.R | Per-strategy subset simprof |
 | `outputs/cluster_equivalence.csv` | 03_country_perspective.R | Within-cluster equiv |
 | `outputs/variable_exhaustive_strategy1.csv` | 04_variable_perspective.R | Var perspective strat 1 |
 | `outputs/variable_exhaustive_strategy2.csv` | 04_variable_perspective.R | Var perspective strat 2 |
