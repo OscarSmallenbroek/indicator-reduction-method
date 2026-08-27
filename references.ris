@@ -92,3 +92,25 @@ SP  - 56
 EP  - 69
 PY  - 2008
 ER  -
+
+
+TY  - JOUR
+ID  - Kowarik2016
+TI  - Imputation with the <i>R</i> package <b>VIM</b>
+AU  - Kowarik, Alexander
+AU  - Templ, Matthias
+T2  - Journal of Statistical Software
+DA  - 2016///
+PY  - 2016
+DO  - 10.18637/jss.v074.i07
+DP  - DOI.org (Crossref)
+VL  - 74
+IS  - 7
+J2  - J. Stat. Soft.
+LA  - en
+SN  - 1548-7660
+UR  - http://www.jstatsoft.org/v74/i07/
+Y2  - 2026/08/26/14:50:46
+L1  - https://digitalcollection.zhaw.ch/bitstreams/3242759d-2e88-4cc0-9917-735e43c358e3/download
+ER  - 
+

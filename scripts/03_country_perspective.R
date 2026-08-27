@@ -207,42 +207,60 @@ full_results <- simprof(
   method.distance = CONFIG$clustering$method_dist
 )
 
-# Run hierarchical clustering on subset dataset
-print("Running clustering on subset dataset...")
-subset_data <- indicator_data[, best_strategy_vars, drop = FALSE]
-subset_results <- simprof(
-  subset_data,
-  num.expected=1000, num.simulated=999,
-  method.transform="identity", alpha=0.05, 
-  method.cluster = CONFIG$clustering$method_cluster,
-  method.distance = CONFIG$clustering$method_dist
-)
-
-# Save clustering results
+# Save full clustering results
 full_simprof_file <- file.path(CONFIG$paths$outputs_dir, "clustering_full.rds")
 saveRDS(full_results, full_simprof_file)
 print(paste("Full clustering results saved to:", full_simprof_file))
 
-subset_simprof_file <- file.path(CONFIG$paths$outputs_dir, "clustering_subset.rds")
-saveRDS(subset_results, subset_simprof_file)
-print(paste("Subset clustering results saved to:", subset_simprof_file))
-
-# Calculate Rand Index
-print("Calculating Rand Index...")
-rand_idx <- rand_ind(full_results, subset_results)
-print(paste("Rand Index:", round(rand_idx, 4)))
-
-# Save Rand Index
-rand_index_file <- file.path(CONFIG$paths$outputs_dir, "clustering_rand_index.csv")
-rand_index_df <- data.frame(
-  comparison = "Full_vs_Subset",
-  rand_index = rand_idx,
-  n_indicators_full = n_indicators,
-  n_indicators_subset = length(best_strategy_vars),
-  strategy = best_strategy_name,
-  stringsAsFactors = FALSE
+# Run hierarchical clustering on each strategy's subset dataset and compute
+# its Rand Index against the full clustering. The best-scoring strategy
+# (by rank correlation) is listed first so downstream consumers that assume
+# row 1 is "the" selected strategy keep working.
+strategy_defs <- list(
+  list(name = "Strategy1_3perPillar", vars = strategy1_vars),
+  list(name = "Strategy2_1perSubpillar", vars = strategy2_vars)
 )
-  write.csv(rand_index_df, rand_index_file, row.names = FALSE)
-print(paste("Rand Index saved to:", rand_index_file))
+strategy_order <- order(sapply(strategy_defs, function(s) s$name != best_strategy_name))
+strategy_defs <- strategy_defs[strategy_order]
+
+rand_index_rows <- list()
+
+for (strategy_def in strategy_defs) {
+  strategy_name <- strategy_def$name
+  strategy_vars <- strategy_def$vars
+
+  print(paste("\nRunning clustering on subset dataset:", strategy_name))
+  subset_data <- indicator_data[, strategy_vars, drop = FALSE]
+  subset_results <- simprof(
+    subset_data,
+    num.expected=1000, num.simulated=999,
+    method.transform="identity", alpha=0.05,
+    method.cluster = CONFIG$clustering$method_cluster,
+    method.distance = CONFIG$clustering$method_dist
+  )
+
+  subset_simprof_file <- file.path(CONFIG$paths$outputs_dir, paste0("clustering_subset_", strategy_name, ".rds"))
+  saveRDS(subset_results, subset_simprof_file)
+  print(paste("Subset clustering results saved to:", subset_simprof_file))
+
+  print("Calculating Rand Index...")
+  rand_idx <- rand_ind(full_results, subset_results)
+  print(paste("Rand Index:", round(rand_idx, 4)))
+
+  rand_index_rows[[strategy_name]] <- data.frame(
+    comparison = paste0("Full_vs_", strategy_name),
+    rand_index = rand_idx,
+    n_indicators_full = n_indicators,
+    n_indicators_subset = length(strategy_vars),
+    strategy = strategy_name,
+    stringsAsFactors = FALSE
+  )
+}
+
+# Save Rand Index results for all strategies
+rand_index_file <- file.path(CONFIG$paths$outputs_dir, "clustering_rand_index.csv")
+rand_index_df <- do.call(rbind, rand_index_rows)
+write.csv(rand_index_df, rand_index_file, row.names = FALSE)
+print(paste("Rand Index results saved to:", rand_index_file))
 
 print("\n=== Country perspective analysis completed. ===")

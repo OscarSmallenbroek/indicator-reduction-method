@@ -73,6 +73,30 @@ strategy1a <- read.csv("outputs/exhaustive_strategy1a_pillar.csv")
 strategy2a <- read.csv("outputs/exhaustive_strategy2a_subpillar.csv")
 rand_index_proportional <- read.csv("outputs/clustering_rand_index_proportional.csv")
 
+# Human-readable labels for the four allocation strategies (internally coded
+# Strategy1/2/1a/2a), used everywhere in the report instead of those codes.
+strategy_labels <- c(
+  Strategy1_3perPillar             = "Flat allocation (pillar)",
+  Strategy2_1perSubpillar          = "Flat allocation (sub-pillar)",
+  Strategy1a_ProportionalPillar    = "Proportional allocation (pillar)",
+  Strategy2a_ProportionalSubpillar = "Proportional allocation (sub-pillar)"
+)
+recode_strategy <- function(x) {
+  out <- unname(strategy_labels[x])
+  ifelse(is.na(out), x, out)
+}
+
+rand_flat_pillar    <- rand_index_flat$rand_index[rand_index_flat$comparison == "Full_vs_Strategy1_3perPillar"]
+rand_flat_subpillar <- rand_index_flat$rand_index[rand_index_flat$comparison == "Full_vs_Strategy2_1perSubpillar"]
+n_flat_subpillar    <- rand_index_flat$n_indicators_subset[rand_index_flat$comparison == "Full_vs_Strategy2_1perSubpillar"]
+
+rand_index_flat_display <- rand_index_flat |>
+  mutate(strategy = recode_strategy(strategy),
+         comparison = paste("Full vs.", strategy))
+rand_index_proportional_display <- rand_index_proportional |>
+  mutate(strategy = recode_strategy(strategy),
+         comparison = paste("Full vs.", strategy))
+
 pca_components <- read.csv("outputs/pca_components.csv")
 strategy2_var <- read.csv("outputs/variable_exhaustive_strategy2.csv")
 strategy1_var <- read.csv("outputs/variable_exhaustive_strategy1.csv")
@@ -91,17 +115,19 @@ fig2_k42 <- fig2_results[fig2_results$k == CONFIG$exhaustive$proportional_target
 
 # Executive Summary
 
-This report documents a method for determining how far the number of indicators in the Global Innovation Index (GII) 2025 can be reduced without significantly compromising the index's discriminatory power. The method was previously applied to the EU JRC's Sustainable and Inclusive Well-being Index [@benczur2024; @boskovic2024]; this report replicates it on GII's `r n_indicators_full` Level-1 indicators observed for `r n_countries` countries/economies.
+This report documents a method for determining how far the number of indicators in the Global Innovation Index (GII) 2025 can be reduced without significantly compromising the index's discriminatory power. The method was previously applied to the EU JRC's Sustainable and Inclusive Well-being Index [@benczur2024; @boskovic2024]; this report replicates it on GII's `r n_indicators_full` Level-1 indicators observed for `r n_countries` countries/economies. 
 
-Two perspectives are evaluated: a **country perspective** (do countries end up the same distance apart using a subset as with the full indicator set?) and a **variable perspective** (does a subset preserve the PCA structure of the full set?). These use two different metrics that are easy to conflate but measure different things: the country perspective reports a **Spearman rank correlation** between full- and subset-distance matrices; the variable perspective reports $r_m$ (and $r_m^2$, interpretable as a % of the full PCA's variance structure recovered by the subset).
+Two perspectives are evaluated: a **country perspective** (do countries end up the same distance apart using a subset as with the full indicator set?) and a **variable perspective** (does a subset preserve the PCA structure of the full set?). The two perspective rely on complementary metrics. The country perspective is based on a Spearman rank correlation between full- and subset-distance matrices; the variable perspective is based on $r_m^2$ - the percentage of the full PCA's variance structure recovered by the subset.
 
-Per the project's specified methodology - one indicator per sub-pillar, chosen as the sub-pillar's best-$r_m$ "reflective indicator" - the headline recommendation is a **`r nrow(strategy2_var)`-indicator subset** ($r_m$ = `r round(strategy2_var$r_m[1], 3)`, i.e. $r_m^2$ ≈ `r round(strategy2_var$r_m[1]^2 * 100, 1)`% of the full PCA's variance structure; Rand Index `r round(rand_index_flat$rand_index[1], 3)` against the full-data country clustering). A larger `r sum(strategy1a_var$allocated)`-indicator subset, built by allocating indicators proportionally to each pillar's actual size rather than a flat count per pillar, reaches $r_m^2$ ≈ `r round(strategy1a_var$r_m[1]^2 * 100, 1)`% and a rank correlation of `r round(strategy1a$correlation[1], 3)` with the full country-distance matrix. Both are documented below alongside the flat and proportional strategies they were chosen from.
+Both perspective require the analyst to choose a sub-set of indicators. We have opted for three strategies here. All of which are based on either 21 or 42 indicators. As the GII has 21 sub-pillars, it is the minimum needed to cover all the concepts it aims to measures. The strategy to select the subsets is to find the best sub-set from 1000 random selections. This method represents a baseline which ignores the conceptual structure. The second strategy is to select one indicator per-pillar in an attempt to follow the conceptual structure at the most detailed level. The third strategy is to proportionally allocate indicators to pillars, with the idea that the number of indicators within a pillar also reflect it's importance or difficulty of measurement.
 
-At the `r nrow(strategy2_var)`-indicator budget, exhaustive within-group search does not clearly outperform an unconstrained random subset of similar size, for either metric; the gap becomes more visible at the larger `r CONFIG$exhaustive$proportional_target`-indicator budget. Both perspectives' results below discuss this directly.
+The the headline recommendation is that the "one indicator per sub-pillar" set of **`r nrow(strategy2_var)`- indicators comes close to reproducing the PCA structure** ($r_m$ = `r round(strategy2_var$r_m[1], 3)`, i.e. $r_m^2$ ≈ `r round(strategy2_var$r_m[1]^2 * 100, 1)`% of the full PCA's variance structure) while also closely reproducing the distance between countries (Rand Index `r round(rand_flat_subpillar, 3)` against the full-data country clustering). A larger `r sum(strategy1a_var$allocated)`-indicator subset, built by allocating indicators proportionally to each pillar's actual size rather than a flat count per pillar, reaches $r_m^2$ ≈ `r round(strategy1a_var$r_m[1]^2 * 100, 1)`% and a rank correlation of `r round(strategy1a$correlation[1], 3)` with the full country-distance matrix. Both are documented below alongside the flat and proportional strategies they were chosen from.
+
+At the `r nrow(strategy2_var)`-indicator budget, exhaustive within-group search does not clearly outperform a random subset of similar size, for either metric; the gap becomes more visible at the larger `r CONFIG$exhaustive$proportional_target`-indicator budget. Both perspectives' results below discuss this directly.
 
 # Introduction
 
-When creating indicator dashboards and composite indices, indicator selection often involves narrowing down from an initially larger set. Besides data quality and relevance considerations, statistical methods are essential to assess whether indicators within a well-defined component are sufficiently aligned. A key statistical question is: how much of the information content ("variation") of the full indicator set is preserved in a candidate subset?
+When creating indicator dashboards and composite indices, indicator selection can be daunting. Stakeholders, statistics and conceptual relevance often diverge in recomendations or build up a large set of indicators that is impractical. A key statistical question is: how much of the information content ("variation") of the full indicator set is preserved in a candidate subset?
 
 This analysis applies two methodological approaches to the GII 2025 data (`r n_indicators_full` Level-1 indicators, `r n_countries` countries):
 
@@ -112,9 +138,9 @@ This analysis applies two methodological approaches to the GII 2025 data (`r n_i
 
 Composite indices such as the GII combine two different measurement logics. At the upper levels - pillars, sub-indices, the index itself - the structure is *formative*: each pillar captures a distinct dimension of innovation performance, and the index's meaning depends on all of them being represented; dropping a pillar entirely would change what the index measures, not just how precisely it measures it. Within a sub-pillar, by contrast, the indicators are closer to *reflective* measures of a single underlying concept - largely interchangeable manifestations of the same thing, where one or two well-chosen indicators can stand in for the group without changing what is being measured.
 
-This distinction motivates the reduction strategy used throughout this analysis: every pillar and sub-pillar is retained in every candidate subset, preserving the formative structure and therefore the index's meaning, while indicator reduction happens only *within* each group, by selecting which reflective indicator(s) best represent it. It also motivates why two different allocation rules are tested later (flat vs. proportional, see Methodology): both only decide *how many* reflective indicators to draw from each formative group, never *whether* to include the group at all - with one exception discussed in Methodology, where proportional allocation can assign a very small sub-pillar zero indicators.
+This distinction motivates the reduction strategy used throughout this analysis: every pillar and sub-pillar is retained in every candidate subset, preserving the formative structure and therefore the index's meaning, while indicator reduction happens only *within* each group, by selecting which reflective indicator(s) best represent it. We apply two strategies to decide *how many* reflective indicators to draw from each formative group. The first is to select one indicator per sub-pillar and the second is to select a number per pillar proportional to it's original size. The metrics for these two strategies ignore correlations between pillars or sub-pillars. However, these cannot be incorporated without also expanding the search to be exhaustive.
 
-Even restricted to searching *within* a single pillar, exhaustive search grows quickly: selecting the best possible subset of size $k$ out of $p$ indicators by brute force requires evaluating $C(p,k) = \frac{p!}{k!(p-k)!}$ combinations. The `r pillar_names["IN.1"]` pillar (IN.1) has `r pillar_sizes["IN.1"]` indicators, so choosing 2 of them already means `r choose(pillar_sizes["IN.1"], 2)` possible combinations. Multiplied across all `r length(pillar_sizes)` pillars, the number of combinations for a full-index subset is far beyond exhaustive search - which is why this analysis searches exhaustively within each pillar or sub-pillar (a tractable sub-problem) rather than across the whole index at once. The table below shows how many combinations remain even after allocating a 20-indicator budget proportionally across pillars.
+We have not implemented an exhaustive search for the best subset. Even restricted to searching *within* a single pillar, exhaustive search grows quickly. Selecting the best possible subset of size $k$ out of $p$ indicators requires evaluating $C(p,k) = \frac{p!}{k!(p-k)!}$ combinations. The `r pillar_names["IN.1"]` pillar (IN.1) has `r pillar_sizes["IN.1"]` indicators, so choosing 2 of them already means `r choose(pillar_sizes["IN.1"], 2)` possible combinations. Multiplied across all `r length(pillar_sizes)` pillars, the number of combinations for a subset is prohibitive. This analysis searches exhaustively within each pillar or sub-pillar rather than across the whole index at once. The table below shows how many combinations remain even after allocating a 20-indicator budget proportionally across pillars.
 
 ```{r combinations}
 allocations |>
@@ -127,54 +153,52 @@ allocations |>
   knitr::kable(caption = "Unique combinations per pillar of GII when allocating a 20-indicator budget proportionally", digits = 2)
 ```
 
-Even after this proportional allocation collapses the problem to one pillar at a time, there are still `r format(prod(allocations$combinations), big.mark = ",", scientific = FALSE)` combinations to explore in total - underscoring why within-group exhaustive search (rather than search across the full index) is the only tractable approach.
+Even after this proportional allocation collapses the problem to one pillar at a time, there are still `r format(prod(allocations$combinations), big.mark = ",", scientific = FALSE)` combinations to explore in total. Underscoring why within-group exhaustive search is the only tractable approach.
 
 # Methodology
 
 ## Statistical Methods Explanation
 
-To determine how much of the information content of the full indicator set is preserved in a potential subset, the variable perspective uses a subset-selection approach based on Principal Component Analysis (PCA). Rather than simply ranking individual variables by importance, this method evaluates entire subsets of variables according to how well they reproduce the PCA structure of the full dataset.
+The variable perspective uses a subset-selection approach based on Principal Component Analysis (PCA). Rather than simply ranking individual variables by importance, this method evaluates entire subsets of variables according to how well they reproduce the PCA structure of the full dataset.
 
-This criterion, $r_m$, was introduced by McCabe [-@mccabe1984] as one of several optimality criteria for selecting "principal variables" - subsets of the original variables that play the role principal components play in ordinary PCA, but remain individually interpretable because they are actual measured indicators rather than linear combinations of all of them. Cadima and Jolliffe [-@cadima2001] formalize this same criterion as one of two indicators for how well a subset of variables approximates a full PCA (the other being a subspace-similarity measure, the generalized coefficient of determination), and show that $r_m^2$ is exactly the percentage of total variance in the original data accounted for by regressing the full data on the chosen subset - the interpretation used throughout this report. Both papers show, with worked examples, that choosing variables by their PC loadings alone - a common shortcut - frequently produces subsets that are clearly suboptimal, and sometimes badly so, compared to subsets chosen by directly maximizing $r_m$; this is part of the motivation for using exhaustive (rather than loadings-based) search within each pillar and sub-pillar throughout this analysis.
+The criterion, $r_m$, was introduced by McCabe [-@mccabe1984] as one of several optimality criteria for selecting "principal variables". In contrast to principle components, principle variables are a subsets of the original variables that best capture variation in the original set. The method was developed in order to select indicators which could function as a principle component while remaining interpretable. Cadima and Jolliffe [-@cadima2001] formalize this same criterion as one of two indicators for how well a subset of variables approximates a full PCA, and show that $r_m^2$ is exactly the percentage of total variance in the original data accounted for by regressing the full data on the chosen subset. This is the interpretation of $r_2^m$ used throughout this report. Both papers show, that choosing variables by their PC loadings alone frequently produces subsets that are suboptimal compared to subsets chosen by directly maximizing $r_m$.
 
-A key advantage of this method is its built-in protection against redundancy. For example, if multiple indicators are highly correlated (nearly identical), including one in the subset provides most of the information, and adding the others contributes relatively little additional ability to reconstruct the principal components.
+A key advantage of this method is its built-in protection against redundancy. For example, if multiple indicators are highly correlated, including one in the subset provides most of the information, and adding the others contributes relatively little additional ability to reconstruct the principal components.
 
 The mathematical formula for the selection criterion is:
 
 $$ r_m = \sqrt{ \frac{\sum_{i=1}^{p}\lambda_i r_{mi}^2} {\sum_{j=1}^{p}\lambda_j} }$$
 
-where: - $\lambda_i$ is the eigenvalue of principal component $i$ from the full dataset (representing the variance explained by that component) - $m$ indexes a specific candidate subset - $r_{mi}^2$ is the coefficient of determination ($R^2$) between principal component $i$ and the candidate subset of variables. Since $PC_{i}$ is a linear combination of the original variables, the $R^2$ of the subset measures how well the principal component can be reconstructed from the subset.
+where: - $\lambda_i$ is the eigenvalue of principal component $i$ ( $PC_{i}$ ) from the full dataset, representing the variance explained by that component. The subscript $m$ indexes a candidate subset - $r_{mi}^2$ is the coefficient of determination ($R^2$) between principal component $i$ and the candidate subset of variables. Since $PC_{i}$ is a linear combination of the original variables, the $R^2$ of the subset measures how well the principal component can be reconstructed from the subset.
 
 Conceptually, this formula computes a weighted average of how well the subset predicts each principal component, with weights given by the variance explained by each component, then normalizes by the total variance. The resulting $r_m^2$ value can be interpreted as the percentage of total variation explained by the subset, providing an intuitive measure of information retention.
 
-This method assumes that "information" is defined by the variance structure captured by PCA, which is appropriate for statistical data reduction. However, it may downweight variables with low variance but high policy relevance, which is an important consideration for substantive index development (see [@hleg2026] for a discussion of the broader limitations of variance-based, GDP-adjacent metrics for capturing societal progress).
-
-Evaluating $r_m$ against the *full* `r n_indicators_full`-indicator PCA requires regressing every one of the `r n_indicators_full` principal components on the candidate subset - expensive enough (one `lm()` fit per component per subset) that it is only used to score a small number of *assembled* candidate subsets, never as the search criterion for exhaustive search itself (see Proportional Allocation Methodology, below).
+This method assumes that "information" is defined by the variance structure captured by PCA, which is appropriate for statistical data reduction. However, it may downweight variables with co-variance but high policy relevance, which is an important consideration for substantive index development (c.f.[@hleg2026]).
 
 ### The Country Perspective's Distance-Based Criterion
 
-The variable perspective's $r_m$ criterion asks whether a subset preserves the *variance structure* of the indicators. The country perspective asks a more direct question: does a subset preserve how similar or dissimilar countries are judged to be relative to one another? For each candidate subset, the pairwise Euclidean distance between every pair of countries is computed using only that subset's indicators, and the ranking of those pairwise distances is compared to the ranking obtained from the full indicator set, via Spearman rank correlation. A correlation near 1 means the subset reproduces almost the same country-similarity ordering as the full index; a low correlation means the subset materially reshuffles which countries look similar to which. Unlike $r_m$, this criterion makes no reference to principal components or variance explained - it is a direct comparison of two similarity structures. The same distance-preservation logic, applied to group structure rather than pairwise ranks, underlies the SIMPROF clustering comparison used later in this report (see Clustering Results).
+The country perspective asks assess whether a subset preserves how similar countries are judged to be relative to one another. For each candidate subset, the pairwise Euclidean distance between every pair of countries is computed using only that subset's indicators, and the ranking of those pairwise distances is compared to the ranking obtained from the full indicator set, via Spearman rank correlation. A correlation near 1 means the subset reproduces almost the same country-similarity ordering as the full index.
 
 ## Proportional Allocation Methodology
 
-Both perspectives select candidate subsets by exhaustive search *within* each pillar or sub-pillar, then assemble the per-group picks into a full subset - consistent with the formative/reflective distinction introduced in "Finding a suitable reduced set" above: every pillar and sub-pillar is represented in every candidate subset, and only the reflective indicators within each group are subject to selection. This requires deciding, up front, how many indicators to take from each group. Two allocation rules are used throughout this report:
+Both perspectives select candidate subsets by exhaustive search *within* each pillar or sub-pillar, then assemble the per-group picks into a full subset - consistent with the formative/reflective distinction. Every pillar and sub-pillar is represented in every candidate subset, and only the reflective indicators within each group are subject to selection. This requires deciding how many indicators to take from each group. Two allocation rules are used throughout this report:
 
-- **Flat allocation** (Strategies 1 and 2): every pillar contributes the same fixed number of indicators (`r CONFIG$exhaustive$strategy1_k_per_pillar` for Strategy 1), or every sub-pillar contributes `r CONFIG$exhaustive$strategy2_k_per_subpillar` (Strategy 2). This is simple, but ignores that GII's pillars range from `r min(pillar_sizes)` indicators (`r pillar_names[names(which.min(pillar_sizes))]`) to `r max(pillar_sizes)` (`r pillar_names[names(which.max(pillar_sizes))]`), and its sub-pillars range from `r min(subpillar_sizes)` to `r max(subpillar_sizes)` - a flat rule systematically over-represents small groups and under-represents large ones relative to their actual share of the index.
-- **Proportional allocation** (Strategies 1a and 2a): each group's budget is set proportional to its share of all indicators, using a **largest-remainder (Hamilton) apportionment**: every group first receives `floor(share)` indicators, and any indicators left over from rounding are handed out one at a time to the groups with the largest fractional remainder. This is the same method used to apportion legislative seats to regions by population. Unlike flat allocation, a group with a very small share of the index can receive **zero** indicators under this rule - the one case, noted above, where a formative group is not represented in the resulting subset. The total budget used is **`r CONFIG$exhaustive$proportional_target`** indicators (double Strategies 1/2's `r CONFIG$exhaustive$strategy1_k_per_pillar * length(pillar_sizes)`): with `r length(subpillar_sizes)` sub-pillars, a `r CONFIG$exhaustive$strategy1_k_per_pillar * length(pillar_sizes)`-indicator budget would leave no room for proportionality to show up at the sub-pillar level (`floor` alone already allocates exactly 1 to every sub-pillar), so a larger budget is needed for Strategy 2a to differ meaningfully from Strategy 2.
+- **Flat allocation of 21 indicators**: every pillar contributes (`r CONFIG$exhaustive$strategy1_k_per_pillar`) indicators, or every sub-pillar contributes `r CONFIG$exhaustive$strategy2_k_per_subpillar` indicators. A simple strategy to implement, however, it ignores that GII's pillars differ in the number of indicators, from `r min(pillar_sizes)` indicators (`r pillar_names[names(which.min(pillar_sizes))]`) to `r max(pillar_sizes)` (`r pillar_names[names(which.max(pillar_sizes))]`), and its sub-pillars range from `r min(subpillar_sizes)` to `r max(subpillar_sizes)` indicators. A flat allocation over-represents small groups and under-represents large ones relative to their actual share of the index. This may limit the subset's utility statistically and leave out conceptual nuances of the GII measurement framework.
+- **Proportional allocation of 21 or 42 indicators**. Each group's budget is set proportional to its share of all indicators, using a **largest-remainder (Hamilton) apportionment**. Every group first receives *n* indicators rounded down to the lowest integer. Any indicators left over are handed out one at a time to the groups with the largest fractional remainder. Unlike flat allocation, a group with a very small share of the index can receive **zero** indicators under this rule. The total budget used is **`r CONFIG$exhaustive$proportional_target`** indicators (double the flat allocations' `r CONFIG$exhaustive$strategy1_k_per_pillar * length(pillar_sizes)`). For proportional budget to be different from flat allocation we needed to increase the budget to be greater than the number of sub-pillars.
 
-Within each allocated group (of either kind), the actual indicators are chosen by exhaustive search maximizing a *local* $r_m$ (for the variable perspective) or a local proxy computed the same way (for the country perspective) - restricted to that group's own sub-PCA rather than the full `r n_indicators_full`-indicator PCA. This local search is a tractable stand-in for an otherwise infeasible full search; the assembled subset is then re-scored against the true, full-dataset metric that is actually reported in this document.
+In the case of the variable perspective, the indicators are chosen by exhaustive search maximizing a *local* $r_m$ or a local proxy computed the same way (for the country perspective) - restricted to that group's own sub-PCA rather than the full `r n_indicators_full`-indicator PCA. This local search is a tractable stand-in for an otherwise infeasible full search. The assembled subset is then re-scored against the full-dataset to obtain the metrics reported in this document.
 
 ## Data Description
 
-The Global Innovation Index (GII) 2025 dataset [@wipo2025] (`gii-data/idata.xlsx`, with metadata in `gii-data/imeta.xlsx`) comprises `r n_indicators_full` Level-1 indicators observed for `r n_countries` countries/economies, organized in a 5-level hierarchy: `r n_indicators_full` indicators -\> `r length(subpillar_sizes)` sub-pillars -\> `r length(pillar_sizes)` pillars -\> `r n_subindices` sub-indices (Inputs, Outputs) -\> `r n_index` overall index. Indicators flagged with `Direction == -1` in the metadata (e.g. pupil-teacher ratio, applied tariff rate) are reversed (`max(x) - x`) before standardization, so that higher standardized values consistently indicate better innovation performance across all indicators. Missing values are imputed via k-nearest-neighbors (`VIM::kNN`, k = 5) prior to z-scoring; see the Appendix for imputation statistics.
+The Global Innovation Index (GII) 2025 dataset [@wipo2025] comprises `r n_indicators_full` Level-1 indicators observed for `r n_countries` countries/economies, organized in a 5-level hierarchy: `r n_indicators_full` indicators -\> `r length(subpillar_sizes)` sub-pillars -\> `r length(pillar_sizes)` pillars -\> `r n_subindices` sub-indices (Inputs, Outputs) -\> `r n_index` overall index. Indicators with negative polarity (e.g. pupil-teacher ratio, applied tariff rate) are reversed before standardization, so that higher standardized values consistently indicate better innovation performance across all indicators. Missing values are imputed via 5-nearest-neighbors using the VIM [@Kowarik2016] package prior to z-scoring; see the Appendix for imputation statistics.
 
 # Key Findings
 
 ## Country Perspective
 
-### Distance Matrix Analysis: Random Subsets vs. Full Dataset (Fig 2)
+### Distance Matrix Analysis of Random Subsets
 
-For subset sizes k ranging from 10% to 90% of all `r n_indicators_full` indicators (plus k = `r CONFIG$exhaustive$proportional_target`, matching the proportional strategies' budget below), 1,000 random subsets of each size were drawn and compared to the full-dataset Euclidean distance matrix via Spearman rank correlation:
+We selected random subset sizes ranging from 10% to 90% of all `r n_indicators_full` indicators, while also selecting specifically `CONFIG$exhaustive$proportional_target`, matching the proportional strategies' budget below. Each k subset was drawn 1000 times and compared to the full-dataset Euclidean distance matrix via Spearman rank correlation:
 
 ```{r}
 fig2_results |>
@@ -184,63 +208,61 @@ fig2_results |>
   knitr::kable(caption = "Rank correlation of random subsets vs. the full distance matrix, by subset size k", digits = 3)
 ```
 
-**Finding:** Correlation rises smoothly and near-monotonically with subset size, from a mean of `r round(fig2_results$mean_correlation[1], 3)` at k = `r fig2_results$k[1]` to `r round(fig2_results$mean_correlation[nrow(fig2_results)], 3)` at k = `r fig2_results$k[nrow(fig2_results)]`. This random-subset curve is the baseline the exhaustive-search strategies below are judged against.
+Correlation rises smoothly and near-monotonically with subset size, from a mean of `r round(fig2_results$mean_correlation[1], 3)` at k = `r fig2_results$k[1]` to `r round(fig2_results$mean_correlation[nrow(fig2_results)], 3)` at k = `r fig2_results$k[nrow(fig2_results)]`. This random-subset curve is the baseline to the local exhaustive-search strategies.
 
-### Exhaustive Search: Strategies 1 and 2 (Flat Allocation)
+### Flat Allocation
 
 ```{r}
 strategy1_country |>
   format_group_table("Pillar", function(x) pillar_names[x], drop_cols = "correlation") |>
-  knitr::kable(caption = "Strategy 1: best 3 indicators per pillar (flat), by rank correlation with the full distance matrix", digits = 3)
+  knitr::kable(caption = "Best 3 indicators per pillar, by rank correlation with the full distance matrix", digits = 3)
 ```
 
 ```{r}
 strategy2_country |>
   format_group_table("Sub-Pillar", function(x) subpillar_names[x], drop_cols = "correlation") |>
-  knitr::kable(caption = "Strategy 2: best 1 indicator per sub-pillar (flat), by rank correlation with the full distance matrix", digits = 3)
+  knitr::kable(caption = "Best indicator per sub-pillar, by rank correlation with the full distance matrix", digits = 3)
 ```
 
-**Finding:** Strategy 1 (`r nrow(strategy1_country) * CONFIG$exhaustive$strategy1_k_per_pillar` indicators, `r CONFIG$exhaustive$strategy1_k_per_pillar`/pillar) reaches a correlation of `r round(strategy1_country$correlation[1], 3)`; Strategy 2 (`r nrow(strategy2_country)` indicators, `r CONFIG$exhaustive$strategy2_k_per_subpillar`/sub-pillar) reaches `r round(strategy2_country$correlation[1], 3)`. Both are close to - not clearly above - the random-subset baseline at a comparable size (mean `r round(fig2_results$mean_correlation[fig2_results$k == 23], 3)` at k = 23 in the table above), suggesting that at a `r nrow(strategy2_country)`-indicator budget, exhaustive within-group search buys little over chance for this metric.
+The selection of (`r nrow(strategy1_country) * CONFIG$exhaustive$strategy1_k_per_pillar` indicators by flat allocation of `r CONFIG$exhaustive$strategy1_k_per_pillar` indicators per pillar reaches a correlation of `r round(strategy1_country$correlation[1], 3)`, while (`r nrow(strategy2_country)` indicators (`r CONFIG$exhaustive$strategy2_k_per_subpillar`/sub-pillar) reaches `r round(strategy2_country$correlation[1], 3)`. Both are close to the random-subset baseline at a comparable size (mean `r round(fig2_results$mean_correlation[fig2_results$k == 23], 3)` at k = 23 in the table above), suggesting that at a `r nrow(strategy2_country)`-indicator budget, exhaustive within-group search buys little over chance for this metric. However, the method is guaranteed to preserve the conceptual structure and therefore more likely to preserve the meaning of the formative indicator.
 
 ### Clustering Results: SIMPROF + Rand Index
 
-Countries were clustered via SIMPROF (significance-tested hierarchical clustering, see @clarke2008) on the full `r n_indicators_full`-indicator dataset and separately on the better-scoring of Strategies 1/2 (Strategy 2, per its higher correlation above), then compared via Rand Index:
+Countries were clustered via SIMPROF (significance-tested hierarchical clustering, see @clarke2008) on the full `r n_indicators_full`-indicator dataset and separately compared via Rand Index. The Rand Index for flat allocation by sub-pillar (1 indicator per sub-pillar) was `r round(rand_flat_subpillar, 3)`, while flat allocation by pillar (3 indicators per pillar) yielded `r round(rand_flat_pillar, 3)`.
 
 ```{r}
-rand_index_flat |>
+rand_index_flat_display |>
   rename(Comparison = comparison, `Rand Index` = rand_index, `Full Indicator Count` = n_indicators_full,
-         `Subset Indicator Count` = n_indicators_subset, Strategy = strategy) |>
-  knitr::kable(caption = "Rand Index: full-data clustering vs. Strategy 2 clustering", digits = 3)
+         `Subset Indicator Count` = n_indicators_subset, `Allocation Rule` = strategy) |>
+  knitr::kable(caption = "Rand Index: full-data clustering vs. flat-allocation clustering (by pillar and by sub-pillar)", digits = 3)
 ```
 
-**Finding:** The `r rand_index_flat$n_indicators_subset[1]`-indicator subset recovers a Rand Index of `r round(rand_index_flat$rand_index[1], 3)` against the full-data clustering - a substantially closer match than the rank-correlation metric alone would suggest, indicating that the coarse cluster structure is more robust to indicator reduction than fine-grained distances are.
+### Proportional Allocation
 
-### Proportional Allocation: Strategies 1a and 2a
-
-Strategies 1 and 2 above allocate a *flat* number of indicators to every pillar or sub-pillar. Strategies 1a and 2a instead allocate a `r CONFIG$exhaustive$proportional_target`-indicator budget proportionally, using the largest-remainder method described in Methodology above.
+We proportionally allocate `r CONFIG$exhaustive$proportional_target` indicators, using the largest-remainder method described in Methodology above.
 
 ```{r}
 strategy1a |>
   format_group_table("Pillar", function(x) pillar_names[x], drop_cols = "correlation") |>
-  knitr::kable(caption = "Strategy 1a: proportional allocation across pillars", digits = 3)
+  knitr::kable(caption = "Proportional allocation across pillars", digits = 3)
 ```
 
 ```{r}
 strategy2a |>
   format_group_table("Sub-Pillar", function(x) subpillar_names[x], drop_cols = "correlation") |>
-  knitr::kable(caption = "Strategy 2a: proportional allocation across sub-pillars", digits = 3)
+  knitr::kable(caption = "Proportional allocation across sub-pillars", digits = 3)
 ```
 
-**Finding:** At the same `r CONFIG$exhaustive$proportional_target`-indicator budget, Strategy 1a (pillar-level) achieves a rank correlation of `r round(strategy1a$correlation[1], 3)`, compared to `r round(strategy2a$correlation[1], 3)` for Strategy 2a (sub-pillar-level). Strategy 1a was therefore used for the SIMPROF clustering comparison below.
+**Finding:** At the same `r CONFIG$exhaustive$proportional_target`-indicator budget, pillar level proportional allocation achieves a rank correlation of `r round(strategy1a$correlation[1], 3)`, compared to `r round(strategy2a$correlation[1], 3)` sub-pillar-level.
 
 ```{r}
-rand_index_proportional |>
+rand_index_proportional_display |>
   rename(Comparison = comparison, `Rand Index` = rand_index, `Full Indicator Count` = n_indicators_full,
-         `Subset Indicator Count` = n_indicators_subset, Strategy = strategy) |>
-  knitr::kable(caption = "Rand Index: full clustering vs. proportional-subset (Strategy 1a) clustering", digits = 3)
+         `Subset Indicator Count` = n_indicators_subset, `Allocation Rule` = strategy) |>
+  knitr::kable(caption = "Rand Index: full clustering vs. proportional-allocation subset clustering", digits = 3)
 ```
 
-**Finding:** The `r rand_index_proportional$n_indicators_subset[1]`-indicator proportional subset recovers a Rand Index of `r round(rand_index_proportional$rand_index[1], 3)` - notably *lower* than Strategy 2's `r rand_index_flat$n_indicators_subset[1]`-indicator Rand Index (`r round(rand_index_flat$rand_index[1], 3)`) despite covering double the indicators and scoring higher on rank correlation. Rand Index is not monotonic in subset size or in rank correlation: it depends on where SIMPROF's significance testing happens to draw cluster boundaries, which can shift disproportionately with a different indicator mix. At the exact `r CONFIG$exhaustive$proportional_target`-indicator budget, a *random* subset already averages a rank correlation of `r round(fig2_k42$mean_correlation[1], 3)` (Fig 2 above) - only marginally below Strategy 1a's `r round(strategy1a$correlation[1], 3)` - so exhaustive search is not clearly outperforming chance at this budget either, echoing the pattern seen at the smaller `r nrow(strategy2_country)`-indicator budget above.
+**Finding:** The `r rand_index_proportional$n_indicators_subset[1]`-indicator proportional subset recovers a Rand Index of `r round(rand_index_proportional$rand_index[1], 3)` - notably *lower* than flat allocation of `r n_flat_subpillar` indicator's Rand Index (`r round(rand_flat_subpillar, 3)`). Despite covering double the indicators and scoring higher on rank correlation. Rand Index is not monotonic in subset size or in rank correlation: it depends on where SIMPROF's significance testing happens to draw cluster boundaries, which can shift disproportionately with a different indicator mix. At the `r CONFIG$exhaustive$proportional_target`-indicator budget, a *random* subset already averages a rank correlation of `r round(fig2_k42$mean_correlation[1], 3)` (Fig 2 above) - only marginally below proportional allocation of 21 indicators rank correlation of `r round(strategy1a$correlation[1], 3)`. Exhaustive search is not clearly outperforming chance at this budget either, echoing the pattern seen at the smaller `r nrow(strategy2_country)` indicator budget above.
 
 ## Variable Perspective
 
@@ -254,49 +276,49 @@ pca_components |>
   knitr::kable(caption = "Components needed for target variance levels (full PCA)")
 ```
 
-**Finding:** The first `r pca_components[1,2]` of `r n_indicators_full` components already capture 80% of total variance, confirming substantial redundancy in the full indicator set - a necessary condition for indicator reduction to be viable at all. Note this is a property of the full PCA (unconstrained linear combinations of all `r n_indicators_full` indicators), not directly comparable to how many *raw indicators* a subset needs - see the $r_m$ vs. #PCs comparison below.
+**Finding:** The first `r pca_components[1,2]` of `r n_indicators_full` components already capture 80% of total variance, confirming substantial redundancy in the full indicator set - a necessary condition for indicator reduction to be viable at all. Note this is a property of the full PCA (unconstrained linear combinations of all `r n_indicators_full` indicators), not directly comparable to how many *raw indicators* a subset needs.
 
-### Reflective Indicators per Sub-Pillar (Strategy 2 - Headline Subset)
+### Reflective Indicators per Sub-Pillar (Flat Allocation - Headline Subset)
 
-Per the project's specified methodology, the headline recommended subset chooses one variable per sub-pillar (Level 2 aggregate), selecting within each sub-pillar the indicator with the best local $r_m$ ("reflective indicator" - the one that best represents its sub-pillar's own variance structure):
+In this section we present results for selecting within each sub-pillar the indicator with the best local $r_m$.
 
 ```{r}
 strategy2_var |>
   format_group_table("Sub-Pillar", function(x) subpillar_names[x], drop_cols = "r_m") |>
-  knitr::kable(caption = "Strategy 2: reflective indicator per sub-pillar", digits = 3)
+  knitr::kable(caption = "Flat allocation (sub-pillar): reflective indicator per sub-pillar", digits = 3)
 ```
 
 **Finding:** This `r nrow(strategy2_var)`-indicator subset achieves $r_m$ = `r round(strategy2_var$r_m[1], 3)`, i.e. $r_m^2$ ≈ `r round(strategy2_var$r_m[1]^2 * 100, 1)`% of the full dataset's PCA variance structure.
 
-### Strategy 1 (Flat, 3 per Pillar) - Comparison
+### Flat Allocation by Pillar (3 per Pillar) - Comparison
 
 ```{r}
 strategy1_var |>
   format_group_table("Pillar", function(x) pillar_names[x], drop_cols = "r_m") |>
-  knitr::kable(caption = "Strategy 1: best 3 indicators per pillar (flat)", digits = 3)
+  knitr::kable(caption = "Flat allocation (pillar): best 3 indicators per pillar", digits = 3)
 ```
 
-**Finding:** Strategy 1 reaches $r_m$ = `r round(strategy1_var$r_m[1], 3)` ($r_m^2$ ≈ `r round(strategy1_var$r_m[1]^2 * 100, 1)`%) - marginally *higher* than Strategy 2's `r round(strategy2_var$r_m[1], 3)` at the same `r nrow(strategy2_var)`-indicator size. Strategy 2 is nonetheless used as the headline recommendation, not Strategy 1, because the project's methodology specifically calls for "one variable per level-2 aggregate, justified by reflective indicator" rather than whichever flat strategy happens to score marginally higher - the sub-pillar-level selection is the specified deliverable, and the score difference between the two is small enough not to override that.
+**Finding:** Flat allocation by pillar reaches $r_m$ = `r round(strategy1_var$r_m[1], 3)` ($r_m^2$ ≈ `r round(strategy1_var$r_m[1]^2 * 100, 1)`%) - marginally *higher* than flat allocation by sub-pillar's `r round(strategy2_var$r_m[1], 3)` at the same `r nrow(strategy2_var)`-indicator size. 
 
-### Strategies 1a and 2a (Proportional Allocation) - Comparison
+### Proportional Allocation by Pillar and Sub-Pillar - Comparison
 
 ```{r}
 strategy1a_var |>
   format_group_table("Pillar", function(x) pillar_names[x], drop_cols = "r_m") |>
-  knitr::kable(caption = "Strategy 1a: proportional allocation across pillars", digits = 3)
+  knitr::kable(caption = "Proportional allocation across pillars", digits = 3)
 ```
 
 ```{r}
 strategy2a_var |>
   format_group_table("Sub-Pillar", function(x) subpillar_names[x], drop_cols = "r_m") |>
-  knitr::kable(caption = "Strategy 2a: proportional allocation across sub-pillars", digits = 3)
+  knitr::kable(caption = "Proportional allocation across sub-pillars", digits = 3)
 ```
 
-**Finding:** At `r sum(strategy1a_var$allocated)` indicators, Strategy 1a reaches $r_m$ = `r round(strategy1a_var$r_m[1], 3)` ($r_m^2$ ≈ `r round(strategy1a_var$r_m[1]^2 * 100, 1)`%) and Strategy 2a reaches $r_m$ = `r round(strategy2a_var$r_m[1], 3)` ($r_m^2$ ≈ `r round(strategy2a_var$r_m[1]^2 * 100, 1)`%) - both a large step up from the `r nrow(strategy2_var)`-indicator strategies, as expected with double the budget.
+**Finding:** At `r sum(strategy1a_var$allocated)` indicators, proportional allocation by pillar reaches $r_m$ = `r round(strategy1a_var$r_m[1], 3)` ($r_m^2$ ≈ `r round(strategy1a_var$r_m[1]^2 * 100, 1)`%) and proportional allocation by sub-pillar reaches $r_m$ = `r round(strategy2a_var$r_m[1], 3)` ($r_m^2$ ≈ `r round(strategy2a_var$r_m[1]^2 * 100, 1)`%) - both a large step up from the `r nrow(strategy2_var)`-indicator flat allocations, as expected with double the budget.
 
 ### Flat-Allocation Sweep: 1-4 Indicators per Pillar
 
-To see how $r_m$ grows as the flat per-pillar allocation increases, Strategy 1's search was repeated for 1, 2, 3, and 4 indicators per pillar:
+To see how $r_m$ grows as the flat per-pillar allocation increases, the flat allocation by pillar search was repeated for 1, 2, 3, and 4 indicators per pillar:
 
 ```{r}
 results_by_dimension |>
@@ -314,7 +336,7 @@ sweep_summary <- results_by_dimension |>
 
 ### Random-Subset $r_m$ Curve vs. #PCs Needed
 
-For the same subset sizes used in the country perspective's Fig 2, $r_m$ was computed for `r CONFIG$sampling$n_random_subsets` random subsets per size. $r_m$ is far more expensive per evaluation than the rank-correlation metric - it requires regressing all `r n_indicators_full` principal components on the candidate subset - so fewer random draws were used per size here than Fig 2's 1,000.
+For the same subset sizes used in the country perspective's Fig 2, $r_m$ was computed for `r CONFIG$sampling$n_random_subsets` random subsets per size. $r_m$ is far more expensive per evaluation than the rank-correlation metric. It requires regressing all `r n_indicators_full` principal components on the candidate subset, so fewer random draws were used per size here than Table 2's 1,000.
 
 ```{r}
 r_m_curve |>
@@ -323,11 +345,11 @@ r_m_curve |>
   knitr::kable(caption = "Random-subset $r_m$ by size, vs. cumulative variance explained by the first k principal components", digits = 3)
 ```
 
-**Finding:** At k = `r nrow(strategy2_var)` (interpolating between k = 15 and k = 23 above), a random subset averages roughly the same $r_m$ as the exhaustive Strategies 1/2 report (`r round(strategy1_var$r_m[1], 3)`/`r round(strategy2_var$r_m[1], 3)`) - the same pattern seen in the country perspective, where exhaustive within-group search does not clearly beat chance at this budget. The PCA-variance column is consistently higher than a same-sized *indicator* subset's $r_m^2$ at every k - expected, since the first k principal components are unconstrained linear combinations of all `r n_indicators_full` indicators, while a subset is restricted to k raw indicators; this gap is the practical cost of requiring the final subset to be actual, interpretable indicators rather than statistical composites.
+**Finding:** At k = `r nrow(strategy2_var)` (interpolating between k = 15 and k = 23 above), a random subset averages roughly the same $r_m$ as the exhaustive flat-allocation results report (`r round(strategy1_var$r_m[1], 3)` by pillar / `r round(strategy2_var$r_m[1], 3)` by sub-pillar) - the same pattern seen in the country perspective, where exhaustive within-group search does not clearly beat chance at this budget. The PCA-variance column is consistently higher than a same-sized *indicator* subset's $r_m^2$ at every k. Since the first k principal components are unconstrained linear combinations of all `r n_indicators_full` indicators, a subset is restricted to k raw indicators. The resulting gap in explained variance is the cost of requiring the final subset to be interpretable indicators rather than statistical composites.
 
 ### Headline Recommended Subset
 
-The `r nrow(strategy2_var)`-indicator subset from Strategy 2 above, with full indicator names:
+The `r nrow(strategy2_var)`-indicator subset from flat allocation by sub-pillar above, with full indicator names:
 
 ```{r}
 optimal_subset |>
@@ -339,53 +361,54 @@ optimal_subset |>
   knitr::kable(caption = "Headline subset: one reflective indicator per sub-pillar", digits = 3)
 ```
 
-**Finding:** This subset captures $r_m^2$ ≈ `r round(optimal_subset$overall_r_m[1]^2 * 100, 1)`% of the full dataset's PCA variance structure and recovers a Rand Index of `r round(rand_index_flat$rand_index[1], 3)` against the full-data country clustering, while cutting the indicator count from `r n_indicators_full` to `r nrow(optimal_subset)` (a `r round((1 - nrow(optimal_subset) / n_indicators_full) * 100)`% reduction).
+**Finding:** This subset captures $r_m^2$ ≈ `r round(optimal_subset$overall_r_m[1]^2 * 100, 1)`% of the full dataset's PCA variance structure and recovers a Rand Index of `r round(rand_flat_subpillar, 3)` against the full-data country clustering, while cutting the indicator count from `r n_indicators_full` to `r nrow(optimal_subset)` (a `r round((1 - nrow(optimal_subset) / n_indicators_full) * 100)`% reduction).
 
-# Cross-Strategy Comparison
+# Cross-Allocation Comparison
 
 ```{r}
 country_comparison <- data.frame(
-  Strategy = c("1 (flat, 3/pillar)", "2 (flat, 1/sub-pillar)", "1a (proportional, pillar)", "2a (proportional, sub-pillar)"),
+  `Allocation Rule` = c("Flat allocation (pillar)", "Flat allocation (sub-pillar)", "Proportional allocation (pillar)", "Proportional allocation (sub-pillar)"),
   Indicators = c(nrow(strategy1_country) * CONFIG$exhaustive$strategy1_k_per_pillar, nrow(strategy2_country),
                  sum(strategy1a$allocated), sum(strategy2a$allocated)),
   `Rank Correlation` = c(strategy1_country$correlation[1], strategy2_country$correlation[1],
                           strategy1a$correlation[1], strategy2a$correlation[1]),
   check.names = FALSE
 )
-knitr::kable(country_comparison, caption = "Country perspective: all four strategies compared", digits = 3)
+knitr::kable(country_comparison, caption = "Country perspective: all four allocation rules compared", digits = 3)
 ```
 
 ```{r}
 variable_comparison <- data.frame(
-  Strategy = c("1 (flat, 3/pillar)", "2 (flat, 1/sub-pillar, headline)", "1a (proportional, pillar)", "2a (proportional, sub-pillar)"),
+  `Allocation Rule` = c("Flat allocation (pillar)", "Flat allocation (sub-pillar, headline)", "Proportional allocation (pillar)", "Proportional allocation (sub-pillar)"),
   Indicators = c(nrow(strategy1_var) * CONFIG$exhaustive$strategy1_k_per_pillar, nrow(strategy2_var),
                  sum(strategy1a_var$allocated), sum(strategy2a_var$allocated)),
-  r_m = c(strategy1_var$r_m[1], strategy2_var$r_m[1], strategy1a_var$r_m[1], strategy2a_var$r_m[1])
+  r_m = c(strategy1_var$r_m[1], strategy2_var$r_m[1], strategy1a_var$r_m[1], strategy2a_var$r_m[1]),
+  check.names = FALSE
 )
 variable_comparison$r_m_squared_pct <- round(variable_comparison$r_m^2 * 100, 1)
-names(variable_comparison) <- c("Strategy", "Indicators", "$r_m$", "$r_m^2$ (%)")
-knitr::kable(variable_comparison, caption = "Variable perspective: all four strategies compared", digits = 3)
+names(variable_comparison) <- c("Allocation Rule", "Indicators", "$r_m$", "$r_m^2$ (%)")
+knitr::kable(variable_comparison, caption = "Variable perspective: all four allocation rules compared", digits = 3)
 ```
 
-**Finding:** Across both perspectives and both metrics, proportional allocation at `r CONFIG$exhaustive$proportional_target` indicators outperforms flat allocation at `r nrow(strategy2_var)` indicators - but budget size, not the allocation rule itself, explains most of that gap (see the random-baseline comparisons above, including the exact `r CONFIG$exhaustive$proportional_target`-indicator random baseline). Within a fixed budget, the two allocation rules perform comparably; the practical case for proportional allocation is representational (no pillar/sub-pillar is systematically over- or under-weighted relative to its actual size in the index), not a demonstrated statistical edge over flat allocation on these metrics alone.
+**Finding:** Across both perspectives and both metrics, proportional allocation at `r CONFIG$exhaustive$proportional_target` indicators outperforms flat allocation at `r nrow(strategy2_var)` indicators - but budget size, not the allocation rule itself, explains most of that gap. Within a fixed budget, the two allocation rules perform comparably. However, this may change if an index has highl correlations between sub-pillars within the same pillar. In the case of the GII, the pillar allocation is slightly advantaged. The practical case for proportional allocation is representational as no pillar/sub-pillar is systematically over- or under-weighted relative to its actual size in the index. However the analyst must decide on a case-by-case basis whether the number of indicators is a good basis for allocation.
 
 # Conclusions
 
-1.  **Meaningful reduction is possible, with a clear methodological trade-off.** The headline `r nrow(strategy2_var)`-indicator subset (one reflective indicator per sub-pillar) captures $r_m^2$ ≈ `r round(optimal_subset$overall_r_m[1]^2 * 100, 1)`% of the full PCA's variance structure and a Rand Index of `r round(rand_index_flat$rand_index[1], 3)` against the full clustering, at a `r round((1 - nrow(optimal_subset) / n_indicators_full) * 100)`% reduction in indicator count.
+1.  **Meaningful reduction is possible, with a clear methodological trade-off.** The headline `r nrow(strategy2_var)`-indicator subset (one reflective indicator per sub-pillar) captures $r_m^2$ ≈ `r round(optimal_subset$overall_r_m[1]^2 * 100, 1)`% of the full PCA's variance structure and a Rand Index of `r round(rand_flat_subpillar, 3)` against the full clustering, at a `r round((1 - nrow(optimal_subset) / n_indicators_full) * 100)`% reduction in indicator count.
 
-2.  **Exhaustive within-group search does not clearly outperform random selection at the `r nrow(strategy2_var)`-indicator budget**, for either metric: both the country-perspective and variable-perspective exhaustive strategies score close to what an unconstrained random subset of similar size averages. The gain from exhaustive search becomes more visible at the larger `r CONFIG$exhaustive$proportional_target`-indicator budget, though even there the margin over a random baseline of the same size is modest.
+2.  **Exhaustive within-group search does not clearly outperform random selection at the `r nrow(strategy2_var)`-indicator budget**, for either metric: both the country-perspective and variable-perspective local exhaustive strategies score close to what an unconstrained random subset of the entire index. The gain from local exhaustive search becomes more visible at the larger `r CONFIG$exhaustive$proportional_target`-indicator budget, though even there the margin over a random baseline of the same size is modest.
 
-3.  **Flat and proportional allocation perform comparably at a fixed budget**; proportional allocation's main practical benefit is representational (no pillar/sub-pillar is systematically over- or under-weighted relative to its actual size in the index), not a demonstrated statistical edge over flat allocation at matched size.
+3.  **Flat and proportional allocation perform comparably at a fixed budget**; proportional allocation's main practical benefit is representational, with a small increase in variance captured over flat allocation at matched size.
 
-4.  **Rand Index is not monotonic with rank correlation or subset size** - the `r CONFIG$exhaustive$proportional_target`-indicator proportional subset scores a lower Rand Index than the `r nrow(strategy2_var)`-indicator flat subset despite a higher rank correlation, because SIMPROF's significance-tested cluster boundaries can shift disproportionately with a different indicator mix.
+4.  **Rand Index is not monotonic with rank correlation or subset size** - the `r CONFIG$exhaustive$proportional_target`-indicator proportional subset scores a lower Rand Index than the `r nrow(strategy2_var)`-indicator flat subset despite a higher rank correlation. SIMPROF's significance-tested cluster boundaries can shift disproportionately with a different indicator mix.
 
-5.  **The** $r_m$ criterion treats "information" as PCA variance, which may downweight indicators with low variance but high substantive/policy relevance; the headline subset should be reviewed against domain expertise, not adopted on statistical grounds alone.
+5.  **The** $r_m$ criterion treats "information" as PCA variance, which may downweight indicators with low covariance but high substantive/policy relevance; the headline subset should be reviewed against domain expertise, not adopted on statistical grounds alone.
 
 # Limitations
 
 1.  **Single-year analysis.** This analysis covers GII 2025 only; temporal stability of the recommended subset across years has not been assessed.
-2.  **PCA-defined "information."** The $r_m$ criterion equates information content with PCA variance structure; a substantively important but low-variance indicator could be excluded even if policy-relevant.
-3.  **Local search proxy.** Exhaustive search within each pillar/sub-pillar uses a local $r_m$ computed on that group's own sub-PCA (not the full `r n_indicators_full`-indicator PCA) as a tractable stand-in for an otherwise infeasible full search; the assembled subset is re-scored against the true full-dataset metric for reporting, but the *search* itself never directly optimizes that true metric.
+2.  **PCA-defined "information."** The $r_m$ criterion equates information content with PCA variance structure; a substantively important but low covariance indicator could be excluded even if policy-relevant.
+3.  **Local search proxy.** Exhaustive search within each pillar/sub-pillar uses a local $r_m$ computed on that group's own sub-PCA (not the full `r n_indicators_full`-indicator PCA) as a tractable stand-in for an otherwise infeasible full search; the assembled subset is re-scored against the true full-dataset metric for reporting, but the *search* itself never directly optimizes that metric.
 4.  **Linear relationships assumed.** Both the rank-correlation and $r_m$ criteria are built on linear/monotonic structure (PCA, Euclidean distance); non-linear relationships between indicators are not captured.
 5.  **Domain-specific validity not tested.** Whether the recommended subset remains meaningful to GII's intended policy audience has not been evaluated here and would require domain-expert review.
 
