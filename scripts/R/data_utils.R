@@ -6,7 +6,10 @@
 load_gii_data <- function() {
   # Load metadata
   imeta <- readxl::read_excel("gii-data/imeta.xlsx")
-  
+  # strip stray annotation marks (e.g. "...business†", "...tariff rate*")
+  imeta$iName <- gsub("[*†]", "", imeta$iName)
+  imeta$iName <- trimws(imeta$iName)
+  imeta$iName <- trimws(gsub("\\s+", " ", imeta$iName)) # collapse repeated spaces, trim ends
   # Load data
   idata <- readxl::read_excel("gii-data/idata.xlsx")
   
