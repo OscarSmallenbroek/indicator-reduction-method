@@ -31,6 +31,10 @@ library(partitionComparison)  # rand_ind() in functions.R needs this attached
 source("scripts/R/config.R")
 source("scripts/R/functions.R")
 source("scripts/R/data_utils.R")
+# Speed patch for clustsig::simprof (the slow step below). Same arguments, same
+# RNG stream, same results - only the inner profile computation is rewritten.
+source("scripts/R/simprof_fast.R")
+use_fast_simprof()
 
 set.seed(CONFIG$seed)
 
@@ -199,6 +203,11 @@ write.csv(selected_vars_df, selected_vars_file, row.names = FALSE)
 # ============================================================================
 message("\n=== SIMPROF + AGGLOMERATIVE CLUSTERING ===")
 
+# Each SIMPROF run is seeded explicitly rather than inheriting wherever the
+# stream happens to be. Otherwise reusing the cached full-dataset clustering
+# would leave the subset runs at a different point in the RNG stream than a
+# from-scratch run, and the two would disagree.
+
 # Reuse the full-dataset clustering from 03_country_perspective.R if it exists
 # (identical computation - SIMPROF is the slow step, no need to repeat it).
 full_simprof_file <- file.path(CONFIG$paths$outputs_dir, "clustering_full.rds")
@@ -207,6 +216,7 @@ if (file.exists(full_simprof_file)) {
   full_results <- readRDS(full_simprof_file)
 } else {
   message("No cached full-dataset clustering found - running clustering on full dataset...")
+  set.seed(CONFIG$seed)
   full_results <- simprof(
     indicator_data,
     num.expected = CONFIG$clustering$simprof_expected,
@@ -223,6 +233,7 @@ if (file.exists(full_simprof_file)) {
 # Run hierarchical clustering on the selected proportional subset
 message("Running clustering on proportional subset dataset...")
 subset_data <- indicator_data[, best_strategy$vars, drop = FALSE]
+set.seed(CONFIG$seed)
 subset_results <- simprof(
   subset_data,
   num.expected = CONFIG$clustering$simprof_expected,
