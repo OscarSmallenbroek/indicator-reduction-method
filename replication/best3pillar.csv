@@ -1,0 +1,22 @@
+"","iCode","iName","Parent","Spearman_cor"
+"1","PolStab","Operational stability for businesses","SP1.1",0.886128749023974
+"2","RuleOL","Rule of law","SP1.2",0.886128749023974
+"3","EntreprenPCplus","Entrepreneurship policies and culture","SP1.3",0.886128749023974
+"4","TertEnrol","Tertiary enrolment","SP2.2",0.886128749023974
+"5","TertMob","Tertiary inbound mobility","SP2.2",0.886128749023974
+"6","RDExp","Gross expenditure on R&D","SP2.3",0.886128749023974
+"7","ICTAccWIPO5G20","ICT access","SP3.1",0.886128749023974
+"8","ElecOut","Electricity output","SP3.2",0.886128749023974
+"9","GDPEner","GDP/unit of energy use","SP3.3",0.886128749023974
+"10","DomCred2Priv","Domestic credit to private sector","SP4.1",0.886128749023974
+"11","JointVenPB","Joint venture deals","SP4.2",0.886128749023974
+"12","HHI","Domestic industry diversification","SP4.3",0.886128749023974
+"13","KnowIntsEmp","Knowledge-intensive employment","SP5.1",0.886128749023974
+"14","UniResColl","University–industry R&D collaboration","SP5.2",0.886128749023974
+"15","ResTalBus","Research talent","SP5.3",0.886128749023974
+"16","PCTInventors","PCT patents by inventor origin","SP6.1",0.886128749023974
+"17","HTExpHKG","High-tech exports","SP6.3",0.886128749023974
+"18","ISOQual","ISO 9001 quality certificates","SP6.3",0.886128749023974
+"19","BrandVal","Global brand value, top 5,000","SP7.1",0.886128749023974
+"20","IndustDes","Industrial designs by origin","SP7.1",0.886128749023974
+"21","TLDsMix","Top-level domains (TLDs)","SP7.3",0.886128749023974

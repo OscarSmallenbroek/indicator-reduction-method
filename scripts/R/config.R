@@ -5,17 +5,21 @@ CONFIG <- list(
   # File paths
   paths = list(
     data_raw      = "gii-data/idata.xlsx",
-    imeta_raw     = "gii-data/imeta.csv",
+    imeta_raw     = "gii-data/imeta.xlsx",
     data_std      = "data/gii_data_standardized.csv",
-    imeta_clean   = "data/imeta_clean.csv",
+    data_complete = "data/gii_data_complete_cases.csv",
+    imputation    = "data/imputation_report.csv",
+    stats_original = "data/descriptive_stats_original.csv",
+    stats_complete = "data/descriptive_stats_complete.csv",
     outputs_dir   = "outputs"
   ),
 
-  # Indicator counts
-  n_indicators = 77,  # Level 1 indicators from imeta
+  # Indicator counts for Fig-2 k grid random selection. 
+  # Is not 78 as we want to search only for subsets of the full idnicator list
+  n_indicators = 77,  
 
   # Hierarchical structure (from imeta$Level)
-  # Level 1: Indicators (77)
+  # Level 1: Indicators (78)
   # Level 2: Sub-pillars (21) - SP1.1 through SP7.3
   # Level 3: Pillars (7) - IN.1-IN.5, OUT.6, OUT.7
   # Level 4: Sub-indices (2) - Inputs, Outputs
@@ -39,7 +43,16 @@ CONFIG <- list(
     # (largest-remainder method) instead of a flat k per group. 42 (~2/sub-pillar
     # on average) gives sub-pillar allocation real room to vary instead of
     # collapsing to 1-per-group.
-    proportional_target = 42
+    proportional_target = 42,
+    # Matched-budget control (Strategy 1b): the same proportional apportionment
+    # at 21, the flat strategies' budget. Without it, "flat vs proportional" is
+    # confounded with "21 vs 42 indicators" and neither can be attributed.
+    # PILLAR LEVEL ONLY. At 21 the pillar apportionment is 2,3,2,3,4,4,3, which
+    # genuinely differs from a flat 3-per-pillar. The sub-pillar apportionment
+    # at 21 is exactly 1 per sub-pillar - identical to flat Strategy 2 - so
+    # there is no sub-pillar counterpart to run; the two rules coincide by
+    # construction at that budget, which is why proportional_target is 42.
+    proportional_target_matched = 21
   ),
 
   # Figure 2: Random subset correlations
