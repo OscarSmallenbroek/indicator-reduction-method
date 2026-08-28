@@ -1,38 +1,27 @@
-# Setup and Library Loading Script
+# Package bootstrap for the GII analysis.
+#
+# The numbered pipeline scripts (01-04) each source config/functions/data_utils
+# themselves and attach the libraries they need, so they run standalone under
+# Rscript. This script only needs to be run once, to install the packages.
 
-# Clear environment
-rm(list = ls())
-
-# Set CRAN mirror
 options(repos = c(CRAN = "https://cran.rstudio.com/"))
 
-# Load required libraries
-required_packages <- c("readxl", "dplyr", "stats", "VIM", "COINr")
-# Check and install missing packages
+# Installed on demand; "stats" is a base package and needs no installation.
+required_packages <- c("readxl", "dplyr", "VIM", "COINr", "clustsig",
+                       "partitionComparison")
 for (pkg in required_packages) {
   if (!requireNamespace(pkg, quietly = TRUE)) {
+    message("Installing ", pkg, "...")
     install.packages(pkg, dependencies = TRUE)
   }
-  library(pkg, character.only = TRUE)
 }
 
-# Load additional packages if available, but don't install automatically
-additional_packages <- c( "ggplot2", "corrplot")
-for (pkg in additional_packages) {
-  if (requireNamespace(pkg, quietly = TRUE)) {
-    library(pkg, character.only = TRUE)
-    print(paste("Loaded package:", pkg))
-  } else {
-    print(paste("Package", pkg, "not available. Some functionality may be limited."))
+# Optional, only used for ad hoc plotting - not required by the pipeline.
+optional_packages <- c("ggplot2", "corrplot")
+for (pkg in optional_packages) {
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    message("Optional package not installed: ", pkg)
   }
 }
 
-# Source shared R files
-source("scripts/R/config.R")
-source("scripts/R/functions.R")
-source("scripts/R/data_utils.R")
-
-# Set working directory (if needed)
-# setwd("path/to/your/project")
-
-print("Setup complete. Required libraries loaded and shared functions sourced.")
+message("Setup complete. Run scripts/01_data_preparation.R onwards.")

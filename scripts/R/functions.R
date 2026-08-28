@@ -17,6 +17,47 @@ spearman_dist_cor <- function(full_dist, sub_dist) {
   cor(as.vector(full_dist), as.vector(sub_dist), method = "spearman")
 }
 
+#' Build a scorer for the distance ("country perspective") selection metric.
+#'
+#' This is the criterion from Example/Matrix_Work.2.R (`subset_test` inside
+#' `find_best_c`/`find_best_d`): score a candidate subset by the Spearman
+#' correlation between the *group's own* Euclidean distance matrix and the
+#' candidate's. The comparison is local to the group, exactly as in the
+#' original - the assembled subset is only scored against the full index once,
+#' by the calling script.
+#'
+#' The original recomputed dist(group) inside the combination loop. Spearman is
+#' Pearson on ranks and the group's distance ranks never change, so they are
+#' ranked once here and reused; the result is identical.
+#' @param group_matrix Numeric matrix of one group's indicators
+#' @return Function taking column indices and returning the Spearman score
+make_dist_scorer <- function(group_matrix) {
+  full_ranks <- rank(as.vector(sim_matrix(group_matrix)))
+  function(subset_idx) {
+    cor(full_ranks,
+        rank(as.vector(sim_matrix(group_matrix[, subset_idx, drop = FALSE]))))
+  }
+}
+
+#' Build a scorer for the r_m ("variable perspective") selection metric.
+#'
+#' This is the criterion from Example/PCA_Work.2.R (`best_k_comp`): score a
+#' candidate subset by how well it reconstructs the group's own sub-PCA.
+#' @param group_matrix Numeric matrix of one group's indicators
+#' @return Function taking column indices and returning the r_m score
+make_rm_scorer <- function(group_matrix) {
+  pca_result_sub <- prcomp(group_matrix, center = TRUE, scale. = TRUE)
+  eig_values_sub <- pca_result_sub$sdev^2
+  # Scores as group_matrix %*% rotation rather than pca_result_sub$x: the two
+  # are equivalent here (the data is already z-scored), but exact ties do occur -
+  # a 2-indicator sub-pillar scores identically whichever one is picked - so the
+  # arithmetic is kept bit-for-bit as it was to keep selections stable.
+  data_pc_sub <- group_matrix %*% as.matrix(pca_result_sub$rotation)
+  function(subset_idx) {
+    r_m(subset_idx, data_pc_sub, group_matrix, eig_values_sub)
+  }
+}
+
 #' Compute multiple correlation (R-squared) between a PC and a subset of variables
 #' @param pc_idx Index of principal component
 #' @param subset_idx Indices of variables in subset
@@ -24,65 +65,40 @@ spearman_dist_cor <- function(full_dist, sub_dist) {
 #' @param dm Matrix of original/scaled data
 #' @return R-squared value
 PC_cor <- function(pc_idx, subset_idx, data_pc, dm) {
-  out <- data_pc[, pc_idx]
-  inputs <- dm[, subset_idx, drop = FALSE]
-  matrix_for_analysis <- cbind(out, inputs)
-  data <- as.data.frame(matrix_for_analysis)
-  model <- lm(out ~ ., data = data)
-  summary(model)$r.squared
+  subset_r_squared(subset_idx, data_pc[, pc_idx, drop = FALSE], dm)
+}
+
+#' R-squared of every column of `targets` regressed on the same subset of `dm`.
+#' The design matrix is identical for every target, so one QR factorisation
+#' (via .lm.fit) serves them all - far cheaper than a formula-lm per target.
+#' @param subset_idx Indices of variables in subset
+#' @param targets Matrix whose columns are regressed on the subset
+#' @param dm Matrix of original/scaled data
+#' @return Numeric vector of R-squared values, one per column of `targets`
+subset_r_squared <- function(subset_idx, targets, dm) {
+  X <- cbind(1, dm[, subset_idx, drop = FALSE])
+  rss <- colSums(.lm.fit(X, targets)$residuals^2)
+  tss <- colSums(sweep(targets, 2, colMeans(targets))^2)
+  1 - rss / tss
 }
 
 #' Compute weighted r_m metric for a proposed subset of variables
+#'
+#' Used both against the full-dataset PCA and against a single group's sub-PCA
+#' (the "local" r_m proxy) - the two are the same calculation, so there is one
+#' implementation. The number of components scored is taken from the inputs.
 #' @param subset_idx Indices of variables in subset
 #' @param data_pc Matrix of PC scores
 #' @param dm Matrix of original/scaled data
 #' @param eig_values Eigenvalues from PCA
 #' @return Weighted r_m value
 r_m <- function(subset_idx, data_pc, dm, eig_values) {
-  r_sum <- 0
   n_components <- min(length(eig_values), ncol(data_pc))
-  
-  for (i in 1:n_components) {
-    r_m.i.squared <- PC_cor(i, subset_idx, data_pc, dm)
-    r_sum <- r_sum + eig_values[i] * r_m.i.squared
-  }
-  
-  eig_sum <- sum(eig_values[1:n_components])
-  sqrt(r_sum / eig_sum)
-}
-
-#' Sub-PCA versions of PC_cor and r_m (for within-group analysis)
-#' @param pc_idx Index of principal component
-#' @param subset_idx Indices of variables in subset
-#' @param data_pc_sub Matrix of PC scores from sub-dataset
-#' @param dm_sub Matrix of original/scaled data from sub-dataset
-#' @return R-squared value
-PC_cor_sub <- function(pc_idx, subset_idx, data_pc_sub, dm_sub) {
-  out <- data_pc_sub[, pc_idx]
-  inputs <- dm_sub[, subset_idx, drop = FALSE]
-  matrix_for_analysis <- cbind(out, inputs)
-  data <- as.data.frame(matrix_for_analysis)
-  model <- lm(out ~ ., data = data)
-  summary(model)$r.squared
-}
-
-#' Sub-PCA version of r_m
-#' @param subset_idx Indices of variables in subset
-#' @param n_var_sub Number of variables in sub-dataset
-#' @param data_pc_sub Matrix of PC scores from sub-dataset
-#' @param dm_sub Matrix of original/scaled data from sub-dataset
-#' @param eig_values_sub Eigenvalues from sub-dataset PCA
-#' @return Weighted r_m value
-r_m_sub <- function(subset_idx, n_var_sub, data_pc_sub, dm_sub, eig_values_sub) {
-  r_sum <- 0
-  
-  for (i in 1:n_var_sub) {
-    r_m.i.squared <- PC_cor_sub(i, subset_idx, data_pc_sub, dm_sub)
-    r_sum <- r_sum + eig_values_sub[i] * r_m.i.squared
-  }
-  
-  eig_sum <- sum(eig_values_sub)
-  sqrt(r_sum / eig_sum)
+  weights <- eig_values[seq_len(n_components)]
+  r_squared <- subset_r_squared(
+    subset_idx, data_pc[, seq_len(n_components), drop = FALSE], dm
+  )
+  sqrt(sum(weights * r_squared) / sum(weights))
 }
 
 #' Get PCA components and number needed to reach variance threshold
@@ -103,105 +119,25 @@ get_pca_components <- function(data, threshold = 0.95) {
   )
 }
 
-#' Get indicators under a specific pillar
-#' @param pillar_code Pillar code (e.g., "IN.1")
-#' @param imeta Metadata data frame
-#' @return Vector of indicator codes
-pillar_indicators <- function(pillar_code, imeta) {
-  # NUM (e.g. "IN.1.1.1") embeds the pillar code; Parent only holds the
-  # direct sub-pillar parent, so it can't be used to match pillar level.
-  imeta %>%
-    filter(Level == 1 & grepl(pillar_code, NUM, fixed = TRUE)) %>%
-    pull(iCode)
-}
-
-#' Get indicators under a specific sub-pillar
-#' @param subpillar_code Sub-pillar code (e.g., "SP1.1")
-#' @param imeta Metadata data frame
-#' @return Vector of indicator codes
-subpillar_indicators <- function(subpillar_code, imeta) {
-  imeta %>%
-    filter(Level == 1 & grepl(subpillar_code, Parent)) %>%
-    pull(iCode)
-}
-
-#' Exhaustive search for best k variables within a group
-#' @param k Number of variables to select
-#' @param group_codes Vector of group codes ( grid column values)
+#' Exhaustive search for the best k variables within every group.
+#' A flat k is just an allocation that gives every group the same budget, so
+#' this delegates to best_allocation_within_group() rather than repeating the
+#' search. The `allocated` column is dropped to keep the flat-strategy CSV
+#' schema (group, <score>, variables) that the report expects, where <score> is
+#' `best_rm` or `best_spearman` depending on `metric`.
+#' @param k Number of variables to select per group
+#' @param group_codes Vector of group codes
 #' @param imeta Metadata data frame
 #' @param data Standardized indicator data
 #' @param level Level to group by (3 for pillar, 2 for sub-pillar)
-#' @return Data frame with best variables and their r_m score
-best_k_within_group <- function(k, group_codes, imeta, data, level = 3) {
-  # Determine the column to filter based on level
-  if (level == 3) {
-    filter_col <- "NUM"  # Pillar level (e.g., "IN.1")
-    group_prefix_length <- 3  # First 3 chars like "IN."
-  } else if (level == 2) {
-    filter_col <- "Parent"  # Sub-pillar level
-    group_prefix_length <- nchar(group_codes[1])  # Full sub-pillar code length
-  } else {
-    stop("Level must be 2 (sub-pillar) or 3 (pillar)")
-  }
-  
-  best_results <- list()
-  
-  for (group_code in group_codes) {
-    # Select variables under this group
-    if (level == 3) {
-      variables <- imeta %>%
-        filter(grepl(group_code, !!sym(filter_col)) & Level == 1) %>%
-        pull(iCode)
-    } else {  # level == 2
-      variables <- imeta %>%
-        filter(!!sym(filter_col) == group_code & Level == 1) %>%
-        pull(iCode)
-    }
-    
-    nc_var <- length(variables)
-    
-    if (nc_var > k) {
-      # Need to search
-      dm_sub <- as.matrix(data[, variables, drop = FALSE])
-      n_var_sub <- min(nc_var, 27)  # Limit as in original code
-      pca_result_sub <- prcomp(dm_sub, center = TRUE, scale. = TRUE)
-      eig_values_sub <- pca_result_sub$sdev^2
-      pcm_sub <- as.matrix(pca_result_sub$rotation)
-      data_pc_sub <- dm_sub %*% pcm_sub
-      
-      combos <- combn(1:nc_var, k, simplify = FALSE)
-      best_rm <- 0
-      best_vars <- NULL
-      
-      for (i in seq_along(combos)) {
-        combo <- combos[[i]]
-        s <- r_m_sub(combo, n_var_sub, data_pc_sub, dm_sub, eig_values_sub)
-        if (s > best_rm) {
-          best_rm <- s
-          best_vars <- variables[combo]
-        }
-      }
-      
-      best_results[[group_code]] <- data.frame(
-        group = group_code,
-        best_rm = best_rm,
-        variables = paste(sort(best_vars), collapse = ","),
-        stringsAsFactors = FALSE
-      )
-    } else {
-      # Take all variables if not enough
-      best_results[[group_code]] <- data.frame(
-        group = group_code,
-        best_rm = 1.0,  # Perfect score when taking all
-        variables = paste(sort(variables), collapse = ","),
-        stringsAsFactors = FALSE
-      )
-    }
-  }
-  
-  # Combine results
-  result_df <- bind_rows(best_results)
-  return(result_df)
+#' @param metric Selection criterion: "r_m" (default) or "distance"
+#' @return Data frame with best variables and their score
+best_k_within_group <- function(k, group_codes, imeta, data, level = 3,
+                                metric = c("r_m", "distance")) {
+  allocation <- setNames(rep(k, length(group_codes)), group_codes)
+  result <- best_allocation_within_group(allocation, imeta, data, level,
+                                         metric = match.arg(metric))
+  result[, setdiff(names(result), "allocated"), drop = FALSE]
 }
 
 #' Get the Level-1 indicator codes belonging to a pillar or sub-pillar group
@@ -238,9 +174,9 @@ group_indicator_counts <- function(group_codes, imeta, level = 3) {
 
 #' Largest-remainder (Hamilton) apportionment of a target total across groups,
 #' proportional to each group's number of Level-1 indicators.
-#' Unlike proportional_allocation(), no group is guaranteed a minimum of 1 -
-#' a group with a very small share of the total can receive zero, and groups
-#' with the largest share get first claim on leftover budget.
+#' No group is guaranteed a minimum of 1: a group with a very small share of
+#' the total can receive zero, and groups with the largest fractional remainder
+#' get first claim on the leftover budget.
 #' @param target Target total number of indicators to allocate
 #' @param imeta Metadata data frame
 #' @param group_codes Vector of group codes (pillar or sub-pillar codes)
@@ -273,12 +209,29 @@ largest_remainder_allocation <- function(target, imeta, group_codes, level = 3) 
 #' Exhaustive search for the best subset within each group, using a
 #' per-group allocation (e.g. from largest_remainder_allocation()) instead
 #' of a single k applied uniformly to every group. Groups allocated 0 are skipped.
+#'
+#' The allocation rule (flat vs proportional) and the selection metric are
+#' independent choices: any allocation can be searched under either metric.
+#'   metric = "r_m"      - variable perspective, after Example/PCA_Work.2.R
+#'                         (`best_k_comp`). Score column is `best_rm`.
+#'   metric = "distance" - country perspective, after Example/Matrix_Work.2.R
+#'                         (`find_best_c`/`find_best_d`). Score column is
+#'                         `best_spearman`.
+#' Both score locally, against the group's own sub-PCA / own distance matrix.
+#' A group with no more indicators than its budget takes all of them and scores
+#' 1.0 under either metric, as in both originals.
 #' @param allocation Named vector of group_code -> k (number of variables to select)
 #' @param imeta Metadata data frame
 #' @param data Standardized indicator data
 #' @param level Level to group by (3 for pillar, 2 for sub-pillar)
-#' @return Data frame with best variables and their r_m score per group
-best_allocation_within_group <- function(allocation, imeta, data, level = 3) {
+#' @param metric Selection criterion: "r_m" (default) or "distance"
+#' @return Data frame with best variables and their score per group
+best_allocation_within_group <- function(allocation, imeta, data, level = 3,
+                                         metric = c("r_m", "distance")) {
+  metric <- match.arg(metric)
+  score_col <- if (metric == "r_m") "best_rm" else "best_spearman"
+  make_scorer <- if (metric == "r_m") make_rm_scorer else make_dist_scorer
+
   best_results <- list()
 
   for (group_code in names(allocation)) {
@@ -291,141 +244,81 @@ best_allocation_within_group <- function(allocation, imeta, data, level = 3) {
     if (nc_var > k) {
       # Need to search
       dm_sub <- as.matrix(data[, variables, drop = FALSE])
-      n_var_sub <- min(nc_var, 27)  # Limit as in original code
-      pca_result_sub <- prcomp(dm_sub, center = TRUE, scale. = TRUE)
-      eig_values_sub <- pca_result_sub$sdev^2
-      pcm_sub <- as.matrix(pca_result_sub$rotation)
-      data_pc_sub <- dm_sub %*% pcm_sub
+      score <- make_scorer(dm_sub)
 
       combos <- combn(1:nc_var, k, simplify = FALSE)
-      best_rm <- 0
+      best_score <- 0
       best_vars <- NULL
 
       for (i in seq_along(combos)) {
         combo <- combos[[i]]
-        s <- r_m_sub(combo, n_var_sub, data_pc_sub, dm_sub, eig_values_sub)
-        if (s > best_rm) {
-          best_rm <- s
+        s <- score(combo)
+        if (s > best_score) {
+          best_score <- s
           best_vars <- variables[combo]
         }
       }
 
-      best_results[[group_code]] <- data.frame(
-        group = group_code,
-        allocated = k,
-        best_rm = best_rm,
-        variables = paste(sort(best_vars), collapse = ","),
-        stringsAsFactors = FALSE
-      )
+      allocated <- k
     } else {
       # Take all variables if the group has <= k indicators
-      best_results[[group_code]] <- data.frame(
-        group = group_code,
-        allocated = nc_var,
-        best_rm = 1.0,  # Perfect score when taking all
-        variables = paste(sort(variables), collapse = ","),
-        stringsAsFactors = FALSE
-      )
+      best_score <- 1.0  # Perfect score when taking all
+      best_vars <- variables
+      allocated <- nc_var
     }
+
+    row <- data.frame(
+      group = group_code,
+      allocated = allocated,
+      score = best_score,
+      variables = paste(sort(best_vars), collapse = ","),
+      stringsAsFactors = FALSE
+    )
+    names(row)[names(row) == "score"] <- score_col
+    best_results[[group_code]] <- row
   }
 
   bind_rows(best_results)
 }
 
-# use simprof from the clustig package
+# Clustering comparison. simprof() comes from the clustsig package, which the
+# calling scripts attach; partitionComparison must also be attached for
+# rand_ind() to dispatch randIndex().
 
-
-#' Calculate Rand Index between two cluster assignments
-## Define a function to calculate the Rand Index for two clusters
-## Uses the results from simprof()
-## Cluster format needs adjusting
-
-rand_ind <- function(cluster_results1,cluster_results2) {
-  nclust1 <- cluster_results1$numgroups
-  cluster1 <- cluster_results1$significantclusters
-  nclust2 <- cluster_results2$numgroups
-  cluster2 <- cluster_results2$significantclusters
-  cluster_array1 <- rep(0,27)
-  cluster_array2 <- rep(0,27)
-  for (i in 1:nclust1) {
-    for (j in 1:length(cluster1[[i]])){
-      sample <- as.integer(cluster1[[i]][j])
-      cluster_array1[sample] <- i
-    }
+#' Flatten a simprof() result into a partition vector.
+#' simprof reports its groups as a list of character vectors of unit indices;
+#' the Rand Index needs one cluster label per unit instead.
+#' @param cluster_results A simprof() result
+#' @return Integer vector of cluster labels, one per unit
+simprof_partition <- function(cluster_results) {
+  clusters <- cluster_results$significantclusters
+  # Size from the clustering itself rather than a hardcoded unit count, so this
+  # works for any dataset, and assert that every unit really got a label.
+  n_units <- max(as.integer(unlist(clusters)))
+  partition <- integer(n_units)
+  for (i in seq_len(cluster_results$numgroups)) {
+    partition[as.integer(clusters[[i]])] <- i
   }
-  for (i in 1:nclust2) {
-    for (j in 1:length(cluster2[[i]])){
-      sample <- as.integer(cluster2[[i]][j])
-      cluster_array2[sample] <- i
-    }
+  if (any(partition == 0)) {
+    stop("simprof result leaves ", sum(partition == 0), " unit(s) unassigned")
   }
-  # Register the measures to take ANY input (no clue)
-  registerPartitionVectorSignatures(environment())
-  # Compare the clusters without EU27 (11th item)
-  return(partitionComparison::randIndex(cluster_array1[-11], cluster_array2[-11]))
+  partition
 }
 
-
-#' Proportional allocation of samples across groups
-#' @param target Target total sample size
-#' @param imeta Metadata data frame
-#' @param groups Vector of group codes (pillar or sub-pillar codes)
-#' @param min_per Minimum number to allocate per group
-#' @return Named vector of allocations
-proportional_allocation <- function(target, imeta, groups, min_per = 1) {
-  # Count indicators per group
-  group_counts <- sapply(groups, function(group) {
-    sum(imeta$Level == 1 & grepl(group, imeta$Parent))
-  })
-  
-  # Start with proportional allocation
-  allocation <- pmax(min_per, round(group_counts / sum(group_counts) * target))
-  
-  # Adjust to exactly match target
-  current_sum <- sum(allocation)
-  
-  if (current_sum < target) {
-    # Need to add more - add to groups with most indicators first
-    while (sum(allocation) < target) {
-      # Order groups by remaining capacity (descending)
-      remaining_capacity <- group_counts - allocation
-      ordered_groups <- groups[order(remaining_capacity, decreasing = TRUE)]
-      
-      for (group in ordered_groups) {
-        if (allocation[group] < group_counts[group]) {
-          allocation[group] <- allocation[group] + 1
-          if (sum(allocation) >= target) break
-        }
-      }
-    }
-  } else if (current_sum > target) {
-    # Need to remove some - remove from groups with most overallocation first
-    while (sum(allocation) > target) {
-      overallocation <- allocation - group_counts
-      overallocation[overallocation < 0] <- 0  # Don't go below actual count
-      
-      # Only consider groups that can still give up items (above min_per)
-      reducible_groups <- names(allocation)[allocation > min_per & overallocation > 0]
-      
-      if (length(reducible_groups) == 0) {
-        # If we can't reduce without going below min_per, break
-        break
-      }
-      
-      # Order by amount we can reduce (descending)
-      reducible_groups <- reducible_groups[order(
-        allocation[reducible_groups] - min_per, 
-        decreasing = TRUE
-      )]
-      
-      for (group in reducible_groups) {
-        if (allocation[group] > min_per) {
-          allocation[group] <- allocation[group] - 1
-          if (sum(allocation) <= target) break
-        }
-      }
-    }
+#' Calculate the Rand Index between two simprof() clusterings
+#'
+#' @param cluster_results1 First simprof() result
+#' @param cluster_results2 Second simprof() result
+#' @param exclude_units Indices of units to drop before comparing
+#' @return Rand Index
+rand_ind <- function(cluster_results1, cluster_results2) {
+  partition1 <- simprof_partition(cluster_results1)
+  partition2 <- simprof_partition(cluster_results2)
+  if (length(partition1) != length(partition2)) {
+    stop("Clusterings cover different numbers of units: ",
+         length(partition1), " vs ", length(partition2))
   }
-  
-  allocation
+  # Register the measures to accept plain integer vectors
+  registerPartitionVectorSignatures(environment())
+  partitionComparison::randIndex(partition1, partition2)
 }

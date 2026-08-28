@@ -1,53 +1,47 @@
 # Data Preparation Script for GII Analysis
-# Thin wrapper calling load_gii_data() and standardize_with_direction()
+# Produces the processed data and descriptive-statistics tables that the
+# report reads. Nothing downstream in the pipeline consumes these files -
+# 02/03/03b/04 each call load_gii_data() themselves - so this script's job is
+# to persist the report's inputs, not to feed the later analysis stages.
 
-# Load GII data using centralized function
-print("Loading GII data...")
+library(dplyr)
+library(COINr)
+source("scripts/R/config.R")
+source("scripts/R/functions.R")
+source("scripts/R/data_utils.R")
+
+message("Loading GII data...")
 gii_data <- load_gii_data()
 
-# Extract components
 idata <- gii_data$raw_data
-imeta <- gii_data$imeta
 complete_data <- gii_data$complete_data
-standardized_data_with_country <- gii_data$standardized_data
-indicator_data_only <- gii_data$indicator_data_only
-country_names <- gii_data$country_names
 
-print(paste("Loaded data with", nrow(complete_data), "countries and", 
-            ncol(complete_data)-1, "indicators"))
+message("Loaded data with ", nrow(complete_data), " countries and ",
+        ncol(complete_data) - 1, " indicators")
 
-write.csv(complete_data, "data/gii_data_complete_cases.csv", row.names = FALSE)
-write.csv(standardized_data_with_country, "data/gii_data_standardized.csv", row.names = FALSE)
+write.csv(complete_data, CONFIG$paths$data_complete, row.names = FALSE)
+write.csv(gii_data$standardized_data, CONFIG$paths$data_std, row.names = FALSE)
 
-# Generate descriptive statistics for original indicator data
-print("Generating descriptive statistics for original data...")
-original_indicators <- idata[, -1]  # Exclude uCode column
-original_stats <- data.frame(
-  Indicator = names(original_indicators),
-  Mean = colMeans(original_indicators, na.rm = TRUE),
-  Median = apply(original_indicators, 2, median, na.rm = TRUE),
-  Min = apply(original_indicators, 2, min, na.rm = TRUE),
-  Max = apply(original_indicators, 2, max, na.rm = TRUE),
-  Kurtosis = apply(original_indicators, 2, function(x) COINr::kurt(x, na.rm = TRUE)),
-  Skewness = apply(original_indicators, 2, function(x) skew(x, na.rm = TRUE))
-)
+# Imputation summary quoted by the report's appendix
+write.csv(gii_data$missingness, CONFIG$paths$imputation, row.names = FALSE)
+message("Imputation report saved to: ", CONFIG$paths$imputation)
 
-# Generate descriptive statistics for complete data after imputation and cleaning
-print("Generating descriptive statistics for complete data...")
-complete_indicators <- complete_data[, -1]  # Exclude uCode column
-complete_stats <- data.frame(
-  Indicator = names(complete_indicators),
-  Mean = colMeans(complete_indicators),
-  Median = apply(complete_indicators, 2, median),
-  Min = apply(complete_indicators, 2, min),
-  Max = apply(complete_indicators, 2, max),
-  Kurtosis = apply(complete_indicators, 2, function(x) COINr::kurt(x, na.rm = TRUE)),
-  Skewness = apply(complete_indicators, 2, function(x) skew(x, na.rm = TRUE))
-)
+#' Descriptive statistics for every indicator column of `df`
+describe_indicators <- function(df) {
+  data.frame(
+    Indicator = names(df),
+    Mean = colMeans(df, na.rm = TRUE),
+    Median = apply(df, 2, median, na.rm = TRUE),
+    Min = apply(df, 2, min, na.rm = TRUE),
+    Max = apply(df, 2, max, na.rm = TRUE),
+    Kurtosis = apply(df, 2, function(x) COINr::kurt(x, na.rm = TRUE)),
+    Skewness = apply(df, 2, function(x) COINr::skew(x, na.rm = TRUE))
+  )
+}
 
-# Save descriptive statistics tables
-write.csv(original_stats, "data/descriptive_stats_original.csv", row.names = FALSE)
-write.csv(complete_stats, "data/descriptive_stats_complete.csv", row.names = FALSE)
+message("Generating descriptive statistics...")
+write.csv(describe_indicators(idata[, -1]), CONFIG$paths$stats_original, row.names = FALSE)
+write.csv(describe_indicators(complete_data[, -1]), CONFIG$paths$stats_complete, row.names = FALSE)
 
-print("Descriptive statistics tables saved to /data directory.")
-print("Data preparation completed.")
+message("Descriptive statistics tables saved to /data directory.")
+message("Data preparation completed.")
