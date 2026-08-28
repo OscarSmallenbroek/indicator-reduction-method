@@ -22,6 +22,10 @@ library(partitionComparison)  # rand_ind() in functions.R needs this attached
 source("scripts/R/config.R")
 source("scripts/R/functions.R")
 source("scripts/R/data_utils.R")
+# Speed patch for clustsig::simprof (the slow step below). Same arguments, same
+# RNG stream, same results - only the inner profile computation is rewritten.
+source("scripts/R/simprof_fast.R")
+use_fast_simprof()
 
 # Set seed for reproducibility
 set.seed(CONFIG$seed)
@@ -205,20 +209,35 @@ write.csv(selected_vars_df, selected_vars_file, row.names = FALSE)
 # ============================================================================
 message("\n=== SIMPROF + AGGLOMERATIVE CLUSTERING ===")
 
-# Run hierarchical clustering on full dataset
-message("Running clustering on full dataset (all indicators)...")
-full_results <- simprof(
-  indicator_data,
-  num.expected=1000, num.simulated=999,
-  method.transform="identity", alpha=0.05, 
-  method.cluster = CONFIG$clustering$method_cluster,
-  method.distance = CONFIG$clustering$method_dist
-)
+# Each SIMPROF run is seeded explicitly rather than inheriting wherever the
+# stream happens to be. Otherwise reusing the cached full-dataset clustering
+# would leave the subset runs at a different point in the RNG stream than a
+# from-scratch run, and the two would disagree.
 
-# Save full clustering results
+# Run hierarchical clustering on full dataset. This is the single most
+# expensive step in the pipeline, and it does not depend on which strategy is
+# selected above, so a previous run's result is reused when present - the same
+# guard 03b_country_perspective_proportional.R uses. Delete
+# outputs/clustering_full.rds to force a recomputation.
 full_simprof_file <- file.path(CONFIG$paths$outputs_dir, "clustering_full.rds")
-saveRDS(full_results, full_simprof_file)
-message(paste("Full clustering results saved to:", full_simprof_file))
+if (file.exists(full_simprof_file)) {
+  message(paste("Reusing cached full-dataset clustering from:", full_simprof_file))
+  full_results <- readRDS(full_simprof_file)
+} else {
+  message("Running clustering on full dataset (all indicators)...")
+  set.seed(CONFIG$seed)
+  full_results <- simprof(
+    indicator_data,
+    num.expected = CONFIG$clustering$simprof_expected,
+    num.simulated = CONFIG$clustering$simprof_simulated,
+    method.transform = "identity",
+    alpha = CONFIG$clustering$alpha,
+    method.cluster = CONFIG$clustering$method_cluster,
+    method.distance = CONFIG$clustering$method_dist
+  )
+  saveRDS(full_results, full_simprof_file)
+  message(paste("Full clustering results saved to:", full_simprof_file))
+}
 
 # Run hierarchical clustering on each strategy's subset dataset and compute
 # its Rand Index against the full clustering. `strategies` is already sorted
@@ -232,6 +251,7 @@ for (strategy in strategies) {
 
   message(paste("\nRunning clustering on subset dataset:", strategy_name))
   subset_data <- indicator_data[, strategy_vars, drop = FALSE]
+  set.seed(CONFIG$seed)
   subset_results <- simprof(
     subset_data,
     num.expected = CONFIG$clustering$simprof_expected,

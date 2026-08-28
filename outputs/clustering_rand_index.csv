@@ -1,3 +1,3 @@
 "comparison","rand_index","n_indicators_full","n_indicators_subset","strategy"
-"Full_vs_Strategy1_3perPillar",0.891252215618809,78,21,"Strategy1_3perPillar"
-"Full_vs_Strategy2_1perSubpillar",0.886977374622042,78,21,"Strategy2_1perSubpillar"
+"Full_vs_Strategy1_3perPillar",0.87321447190074,78,21,"Strategy1_3perPillar"
+"Full_vs_Strategy2_1perSubpillar",0.885726201647378,78,21,"Strategy2_1perSubpillar"
