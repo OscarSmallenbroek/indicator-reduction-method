@@ -97,6 +97,9 @@ rand_flat_pillar    <- rand_index_flat$rand_index[rand_index_flat$comparison == 
 rand_flat_subpillar <- rand_index_flat$rand_index[rand_index_flat$comparison == "Full_vs_Strategy2_1perSubpillar"]
 n_flat_subpillar    <- rand_index_flat$n_indicators_subset[rand_index_flat$comparison == "Full_vs_Strategy2_1perSubpillar"]
 
+rand_proportional_pillar    <- rand_index_proportional$rand_index[rand_index_proportional$strategy == "Strategy1a_ProportionalPillar"]
+rand_proportional_subpillar <- rand_index_proportional$rand_index[rand_index_proportional$strategy == "Strategy2a_ProportionalSubpillar"]
+
 rand_index_flat_display <- rand_index_flat |>
   mutate(strategy = recode_strategy(strategy),
          comparison = paste("Full vs.", strategy))
@@ -275,12 +278,12 @@ Applying the same proportional rule across pillars at the flat `r CONFIG$exhaust
 rand_index_proportional_display |>
   rename(Comparison = comparison, `Rand Index` = rand_index, `Full Indicator Count` = n_indicators_full,
          `Subset Indicator Count` = n_indicators_subset, `Allocation Rule` = strategy) |>
-  knitr::kable(caption = "Rand Index: full clustering vs. proportional-allocation subset clustering", digits = 3)
+  knitr::kable(caption = "Rand Index: full clustering vs. proportional-allocation subset clustering (by pillar and by sub-pillar)", digits = 3)
 ```
 
-**Finding:** The `r rand_index_proportional$n_indicators_subset[1]`-indicator proportional subset recovers a Rand Index of `r round(rand_index_proportional$rand_index[1], 3)`, against `r round(rand_flat_pillar, 3)` and `r round(rand_flat_subpillar, 3)` for the two `r nrow(strategy2_country)`-indicator flat subsets.
+**Finding:** Against the full-data country clustering, the `r CONFIG$exhaustive$proportional_target`-indicator proportional subset recovers a Rand Index of `r round(rand_proportional_pillar, 3)` when allocated across pillars and `r round(rand_proportional_subpillar, 3)` when allocated across sub-pillars - against `r round(rand_flat_pillar, 3)` and `r round(rand_flat_subpillar, 3)` for the two `r nrow(strategy2_country)`-indicator flat subsets.
 
-All three values fall within `r round(max(c(rand_flat_pillar, rand_flat_subpillar, rand_index_proportional$rand_index[1])) - min(c(rand_flat_pillar, rand_flat_subpillar, rand_index_proportional$rand_index[1])), 3)` of one another, even though the subsets differ in size by a factor of two and span `r round(strategy1a$correlation[1] - strategy2_country$correlation[1], 3)` in rank correlation. Recovery of the country clustering is therefore insensitive to both subset size and rank correlation over this range: once every pillar and sub-pillar is represented, additional indicators sharpen the distance structure without redrawing the cluster boundaries.
+All four values fall within `r round(max(c(rand_flat_pillar, rand_flat_subpillar, rand_proportional_pillar, rand_proportional_subpillar)) - min(c(rand_flat_pillar, rand_flat_subpillar, rand_proportional_pillar, rand_proportional_subpillar)), 3)` of one another, even though the subsets differ in size by a factor of two and span `r round(strategy1a$correlation[1] - strategy2_country$correlation[1], 3)` in rank correlation. Recovery of the country clustering is therefore insensitive to both subset size and allocation level over this range: once every pillar and sub-pillar is represented, additional indicators sharpen the distance structure without redrawing the cluster boundaries.
 
 ## Variable Perspective
 
@@ -430,7 +433,7 @@ The case for proportional allocation is therefore representational rather than s
 
 3.  **The allocation rule matters far less than the budget.** Compared at a common `r nrow(strategy2_var)`-indicator budget, flat and proportional allocation across pillars differ by `r round(strategy1b$correlation[1] - strategy1_country$correlation[1], 3)` in rank correlation and `r round(strategy1b_var$r_m[1] - strategy1_var$r_m[1], 3)` in $r_m$, while doubling the budget under a fixed rule gains `r round(strategy1a$correlation[1] - strategy1b$correlation[1], 3)` and `r round(strategy1a_var$r_m[1] - strategy1b_var$r_m[1], 3)` respectively. Proportional allocation's benefit is representational rather than statistical.
 
-4.  **Recovery of the country clustering saturates well below the full indicator set.** The three candidate subsets return Rand Indices within `r round(max(c(rand_flat_pillar, rand_flat_subpillar, rand_index_proportional$rand_index[1])) - min(c(rand_flat_pillar, rand_flat_subpillar, rand_index_proportional$rand_index[1])), 3)` of one another despite differing twofold in size and by `r round(strategy1a$correlation[1] - strategy2_country$correlation[1], 3)` in rank correlation. Beyond covering every pillar and sub-pillar, further indicators refine the distance structure without changing which countries group together.
+4.  **Recovery of the country clustering saturates well below the full indicator set.** The four candidate subsets (flat and proportional, by pillar and by sub-pillar) return Rand Indices within `r round(max(c(rand_flat_pillar, rand_flat_subpillar, rand_proportional_pillar, rand_proportional_subpillar)) - min(c(rand_flat_pillar, rand_flat_subpillar, rand_proportional_pillar, rand_proportional_subpillar)), 3)` of one another despite differing twofold in size and by `r round(strategy1a$correlation[1] - strategy2_country$correlation[1], 3)` in rank correlation. Beyond covering every pillar and sub-pillar, further indicators refine the distance structure without changing which countries group together.
 
 5.  **The** $r_m$ criterion treats "information" as PCA variance, which may downweight indicators with low covariance but high substantive/policy relevance; the headline subset should be reviewed against domain expertise, not adopted on statistical grounds alone.
 

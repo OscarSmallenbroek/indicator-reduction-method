@@ -230,39 +230,53 @@ if (file.exists(full_simprof_file)) {
   message(paste("Full clustering results saved to:", full_simprof_file))
 }
 
-# Run hierarchical clustering on the selected proportional subset
-message("Running clustering on proportional subset dataset...")
-subset_data <- indicator_data[, best_strategy$vars, drop = FALSE]
-set.seed(CONFIG$seed)
-subset_results <- simprof(
-  subset_data,
-  num.expected = CONFIG$clustering$simprof_expected,
-  num.simulated = CONFIG$clustering$simprof_simulated,
-  method.transform = "identity",
-  alpha = CONFIG$clustering$alpha,
-  method.cluster = CONFIG$clustering$method_cluster,
-  method.distance = CONFIG$clustering$method_dist
-)
+# Run hierarchical clustering on each proportional strategy's subset dataset
+# and compute its Rand Index against the full clustering - both 1a and 2a,
+# not just the rank-correlation winner, so the two allocation levels are as
+# comparable here as they are for the flat strategies in
+# 03_country_perspective.R. `strategies` is already sorted best-first, so
+# downstream consumers that assume row 1 is "the" selected strategy keep
+# working.
+rand_index_rows <- list()
 
-subset_simprof_file <- file.path(CONFIG$paths$outputs_dir, "clustering_subset_proportional.rds")
-saveRDS(subset_results, subset_simprof_file)
-message(paste("Proportional subset clustering results saved to:", subset_simprof_file))
+for (strategy in strategies) {
+  strategy_name <- strategy$name
+  strategy_vars <- strategy$vars
 
-# Calculate Rand Index
-message("Calculating Rand Index...")
-rand_idx <- rand_ind(full_results, subset_results)
-message(paste("Rand Index:", round(rand_idx, 4)))
+  message(paste("\nRunning clustering on subset dataset:", strategy_name))
+  subset_data <- indicator_data[, strategy_vars, drop = FALSE]
+  set.seed(CONFIG$seed)
+  subset_results <- simprof(
+    subset_data,
+    num.expected = CONFIG$clustering$simprof_expected,
+    num.simulated = CONFIG$clustering$simprof_simulated,
+    method.transform = "identity",
+    alpha = CONFIG$clustering$alpha,
+    method.cluster = CONFIG$clustering$method_cluster,
+    method.distance = CONFIG$clustering$method_dist
+  )
 
-# Save Rand Index
+  subset_simprof_file <- file.path(CONFIG$paths$outputs_dir, paste0("clustering_subset_", strategy_name, ".rds"))
+  saveRDS(subset_results, subset_simprof_file)
+  message(paste("Subset clustering results saved to:", subset_simprof_file))
+
+  message("Calculating Rand Index...")
+  rand_idx <- rand_ind(full_results, subset_results)
+  message(paste("Rand Index:", round(rand_idx, 4)))
+
+  rand_index_rows[[strategy_name]] <- data.frame(
+    comparison = paste0("Full_vs_", strategy_name),
+    rand_index = rand_idx,
+    n_indicators_full = n_indicators,
+    n_indicators_subset = length(strategy_vars),
+    strategy = strategy_name,
+    stringsAsFactors = FALSE
+  )
+}
+
+# Save Rand Index results for both proportional strategies
 rand_index_file <- file.path(CONFIG$paths$outputs_dir, "clustering_rand_index_proportional.csv")
-rand_index_df <- data.frame(
-  comparison = "Full_vs_ProportionalSubset",
-  rand_index = rand_idx,
-  n_indicators_full = n_indicators,
-  n_indicators_subset = length(best_strategy$vars),
-  strategy = best_strategy$name,
-  stringsAsFactors = FALSE
-)
+rand_index_df <- do.call(rbind, rand_index_rows)
 write.csv(rand_index_df, rand_index_file, row.names = FALSE)
 message(paste("Rand Index saved to:", rand_index_file))
 
