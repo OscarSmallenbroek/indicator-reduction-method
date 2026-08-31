@@ -8,6 +8,10 @@ format:
     number-sections: true
     colorlinks: true
 bibliography: references.ris
+header-includes:
+  - \usepackage{pdflscape}
+  - \newcommand{\blandscape}{\begin{landscape}}
+  - \newcommand{\elandscape}{\end{landscape}}
 ---
 
 ```{r setup, include=FALSE}
@@ -39,29 +43,9 @@ pillar_names <- imeta |> filter(Level == 3) |> select(NUM, iName) |> tibble::def
 subpillar_names <- imeta |> filter(Level == 2) |> select(iCode, iName) |> tibble::deframe()
 indicator_names <- imeta |> filter(Level == 1) |> select(iCode, iName) |> tibble::deframe()
 
-# Map a comma-separated string of indicator iCodes to their full names
-name_indicators <- function(codes_str) {
-  vapply(codes_str, function(s) {
-    codes <- trimws(strsplit(s, ",")[[1]])
-    paste(indicator_names[codes], collapse = "; ")
-  }, character(1), USE.NAMES = FALSE)
-}
-
-# Standard display cleanup for the group-level (pillar/sub-pillar) result
-# tables: map codes to readable names, drop the assembled-subset metric
-# column (repeats a single value across every row - reported in text
-# instead), and give the remaining columns plain-language headers.
-format_group_table <- function(df, group_label, name_fn, drop_cols = character(0)) {
-  df <- df[, !(names(df) %in% drop_cols), drop = FALSE]
-  df$group <- name_fn(df$group)
-  if ("variables" %in% names(df)) df$variables <- name_indicators(df$variables)
-  names(df)[names(df) == "group"] <- group_label
-  names(df)[names(df) == "allocated"] <- "Indicators Allocated"
-  names(df)[names(df) == "best_rm"] <- "$r_m$ of Best Subset"
-  names(df)[names(df) == "best_spearman"] <- "Within-Group Rank Correlation"
-  names(df)[names(df) == "variables"] <- "Selected Indicators"
-  df
-}
+# Map a character vector of indicator iCodes to their full names, e.g. for
+# the results of a set operation (intersect/setdiff) on selected-indicator sets.
+name_indicators_vec <- function(codes) unname(indicator_names[codes])
 ```
 
 ```{r load-results, include=FALSE}
@@ -122,6 +106,76 @@ original_stats <- read.csv("data/descriptive_stats_original.csv")
 complete_stats <- read.csv("data/descriptive_stats_complete.csv")
 
 fig2_k42 <- fig2_results[fig2_results$k == CONFIG$exhaustive$proportional_target, ]
+
+# Step-wise local-search results: one row per (allocation, level, budget,
+# metric) combination, and the long-format table of which indicator each
+# combination selected from which group.
+stepwise_results <- read.csv("outputs/stepwise_search_results.csv")
+stepwise_vars <- read.csv("outputs/stepwise_selected_variables.csv")
+
+# Full-dataset score a step-wise combination achieved, by combination code
+# (e.g. "flat_pillar_21") and metric ("distance" or "r_m").
+stepwise_score <- function(combination, metric_code) {
+  stepwise_results$full_dataset_score[stepwise_results$combination == combination &
+                                         stepwise_results$metric == metric_code]
+}
+
+# Indicator-overlap table for one perspective: for every group in `flat_df`
+# (an exhaustive-search result table, e.g. strategy1_country), compare its
+# selection to the exhaustive proportional result `proportional_df` and to
+# the step-wise result named by `stepwise_combo` (run under the SAME
+# allocation as `flat_df`, so the step-wise-vs-exhaustive comparison holds
+# the per-group budget fixed). Reports, per group: the flat allocation's own
+# local score (`score_col`, its only naturally group-level score - step-wise
+# scores the whole candidate against the full dataset, not group-by-group -
+# see Methodology), the indicators all three approaches agree on, the
+# indicators shared by exactly two of the three (labeled with which pair),
+# and the indicators unique to exactly one. Every indicator selected by any
+# approach appears in exactly one of these six columns, so the row accounts
+# for the full union of what was selected, not just the fully-unanimous or
+# fully-unique picks.
+build_overlap_table <- function(flat_df, proportional_df, stepwise_combo,
+                                 metric_code, score_col, group_label_fn) {
+  sw <- stepwise_vars[stepwise_vars$combination == stepwise_combo &
+                         stepwise_vars$metric == metric_code, ]
+  rows <- lapply(flat_df$group, function(g) {
+    flat_set <- trimws(strsplit(flat_df$variables[flat_df$group == g], ",")[[1]])
+    prop_set <- trimws(strsplit(proportional_df$variables[proportional_df$group == g], ",")[[1]])
+    sw_set   <- sw$variable[sw$group == g]
+
+    common    <- Reduce(intersect, list(flat_set, prop_set, sw_set))
+    flat_only <- setdiff(flat_set, union(prop_set, sw_set))
+    prop_only <- setdiff(prop_set, union(flat_set, sw_set))
+    sw_only   <- setdiff(sw_set,   union(flat_set, prop_set))
+
+    # Shared by exactly two of the three - would otherwise fall into neither
+    # "common" (needs all three) nor any "-only" column (needs none of the
+    # other two), leaving them silently unaccounted for.
+    flat_prop <- setdiff(intersect(flat_set, prop_set), sw_set)
+    flat_sw   <- setdiff(intersect(flat_set, sw_set), prop_set)
+    prop_sw   <- setdiff(intersect(prop_set, sw_set), flat_set)
+    shared_two <- c(
+      if (length(flat_prop)) paste0(name_indicators_vec(flat_prop), " (Flat+Prop.)"),
+      if (length(flat_sw))   paste0(name_indicators_vec(flat_sw), " (Flat+Step-wise)"),
+      if (length(prop_sw))   paste0(name_indicators_vec(prop_sw), " (Prop.+Step-wise)")
+    )
+
+    data.frame(
+      Group = group_label_fn(g),
+      Score = round(flat_df[[score_col]][flat_df$group == g], 3),
+      Common = paste(name_indicators_vec(common), collapse = "; "),
+      SharedTwo = paste(shared_two, collapse = "; "),
+      FlatOnly = paste(name_indicators_vec(flat_only), collapse = "; "),
+      PropOnly = paste(name_indicators_vec(prop_only), collapse = "; "),
+      StepwiseOnly = paste(name_indicators_vec(sw_only), collapse = "; "),
+      stringsAsFactors = FALSE
+    )
+  })
+  out <- do.call(rbind, rows)
+  names(out) <- c("Group", "Within-Group Score (Flat)", "Common to All Three", "Shared by Two",
+                   "Flat Only", "Proportional Only", "Step-wise Only")
+  out
+}
 ```
 
 # Executive Summary
@@ -192,6 +246,19 @@ This method assumes that "information" is defined by the variance structure capt
 
 The country perspective asks assess whether a subset preserves how similar countries are judged to be relative to one another. For each candidate subset, the pairwise Euclidean distance between every pair of countries is computed using only that subset's indicators, and the ranking of those pairwise distances is compared to the ranking obtained from the full indicator set, via Spearman rank correlation. A correlation near 1 means the subset reproduces almost the same country-similarity ordering as the full index.
 
+### Step-wise Local Search
+
+Exhaustive search identifies the single best-scoring subset within a group, but it is only tractable because it is applied separately to each pillar or sub-pillar; the criterion it maximizes for a given group is therefore local to that group's own indicators, rather than the full index. A step-wise (greedy) local-search procedure offers an alternative that scales to a group or a budget too large to search exhaustively, and that optimizes a candidate subset's score against the FULL indicator set directly, rather than against any single group in isolation. It applies equally to either selection criterion - the country perspective's rank correlation or the variable perspective's $r_m$ - and to any allocation of indicators to groups.
+
+The procedure proceeds as follows:
+
+1.  **Initialization.** For every group, the number of indicators specified by that group's allocation is drawn at random, without replacement, from the indicators belonging to that group. Together these draws form the initial candidate subset.
+2.  **Scoring.** The candidate subset is scored against the full indicator set - by the rank correlation of distance matrices, or by $r_m$ against the full-dataset PCA - not against any single group's own indicators.
+3.  **Local search.** Each indicator currently in the subset is considered for replacement, in turn, by every other indicator belonging to the same group. A replacement is accepted whenever it raises the subset's full-dataset score, and search continues from the improved subset; a replacement that would introduce an indicator already present elsewhere in the subset is never considered, since a duplicated indicator would be double-counted in the underlying distance or PCA calculation.
+4.  **Convergence.** Step 3 is repeated, as a full pass over every group and every indicator in it, until a complete pass produces no further improvement, or a fixed maximum number of passes is reached.
+
+Because the search starts from a random draw and only ever accepts a strictly improving substitution, it converges to a local optimum with respect to one-indicator-at-a-time swaps, which need not be the global optimum an exhaustive search would find were one computationally feasible. The procedure is therefore run from several independent random starting points, and the best-scoring outcome across those runs is retained.
+
 ## Proportional Allocation Methodology
 
 Both perspectives select candidate subsets by exhaustive search *within* each pillar or sub-pillar, then assemble the per-group picks into a full subset - consistent with the formative/reflective distinction. Every pillar and sub-pillar is represented in every candidate subset, and only the reflective indicators within each group are subject to selection. This requires deciding how many indicators to take from each group. Two allocation rules are used throughout this report:
@@ -225,18 +292,6 @@ Correlation rises smoothly and near-monotonically with subset size, from a mean 
 
 ### Flat Allocation
 
-```{r}
-strategy1_country |>
-  format_group_table("Pillar", function(x) pillar_names[x], drop_cols = "correlation") |>
-  knitr::kable(caption = "Best 3 indicators per pillar, by rank correlation with the full distance matrix", digits = 3)
-```
-
-```{r}
-strategy2_country |>
-  format_group_table("Sub-Pillar", function(x) subpillar_names[x], drop_cols = "correlation") |>
-  knitr::kable(caption = "Best indicator per sub-pillar, by rank correlation with the full distance matrix", digits = 3)
-```
-
 **Finding:** Flat allocation of `r CONFIG$exhaustive$strategy1_k_per_pillar` indicators per pillar reaches a rank correlation of `r round(strategy1_country$correlation[1], 3)` with the full distance matrix; flat allocation of `r CONFIG$exhaustive$strategy2_k_per_subpillar` indicator per sub-pillar reaches `r round(strategy2_country$correlation[1], 3)`. The comparable random baseline (k = 23) averages `r round(fig2_results$mean_correlation[fig2_results$k == 23], 3)`, with a maximum of `r round(fig2_results$max_correlation[fig2_results$k == 23], 3)` across 1000 draws.
 
 The two allocation levels therefore diverge. Pillar-level allocation exceeds the random average by `r round(strategy1_country$correlation[1] - fig2_results$mean_correlation[fig2_results$k == 23], 3)`, while sub-pillar-level allocation falls `r round(fig2_results$mean_correlation[fig2_results$k == 23] - strategy2_country$correlation[1], 3)` below it. Neither reaches the best random subset of the same size, which is expected: the search is confined within groups, so it cannot exploit the cross-group combinations available to an unconstrained draw. The constraint is accepted deliberately, since it is what guarantees every pillar and sub-pillar remains represented and the index retains its formative meaning.
@@ -256,18 +311,6 @@ rand_index_flat_display |>
 
 We proportionally allocate `r CONFIG$exhaustive$proportional_target` indicators, using the largest-remainder method described in Methodology above.
 
-```{r}
-strategy1a |>
-  format_group_table("Pillar", function(x) pillar_names[x], drop_cols = "correlation") |>
-  knitr::kable(caption = "Proportional allocation across pillars", digits = 3)
-```
-
-```{r}
-strategy2a |>
-  format_group_table("Sub-Pillar", function(x) subpillar_names[x], drop_cols = "correlation") |>
-  knitr::kable(caption = "Proportional allocation across sub-pillars", digits = 3)
-```
-
 **Finding:** At the `r CONFIG$exhaustive$proportional_target`-indicator budget, proportional allocation across pillars achieves a rank correlation of `r round(strategy1a$correlation[1], 3)`, against `r round(strategy2a$correlation[1], 3)` across sub-pillars. The random baseline at this size averages `r round(fig2_k42$mean_correlation[1], 3)`.
 
 The advantage of pillar-level over sub-pillar-level allocation seen at 21 indicators persists at 42, and in the same direction: pillar-level allocation again exceeds the random average while sub-pillar-level allocation falls below it. Doubling the budget raises every figure, but does not alter the ordering between the two allocation levels.
@@ -285,6 +328,39 @@ rand_index_proportional_display |>
 
 All four values fall within `r round(max(c(rand_flat_pillar, rand_flat_subpillar, rand_proportional_pillar, rand_proportional_subpillar)) - min(c(rand_flat_pillar, rand_flat_subpillar, rand_proportional_pillar, rand_proportional_subpillar)), 3)` of one another, even though the subsets differ in size by a factor of two and span `r round(strategy1a$correlation[1] - strategy2_country$correlation[1], 3)` in rank correlation. Recovery of the country clustering is therefore insensitive to both subset size and allocation level over this range: once every pillar and sub-pillar is represented, additional indicators sharpen the distance structure without redrawing the cluster boundaries.
 
+### Step-wise Local Search
+
+The step-wise local-search procedure (Methodology) was run under the rank-correlation criterion for every allocation rule (flat, proportional), grouping level (pillar, sub-pillar) and budget (21, 42) considered above, with `r unique(stepwise_results$n_restarts)` independent random restarts per combination and the best-scoring restart retained.
+
+```{r}
+stepwise_results |>
+  filter(metric == "distance") |>
+  transmute(
+    Level = ifelse(level == "pillar", "Pillar", "Sub-pillar"),
+    Budget = budget,
+    `Allocation Rule` = ifelse(allocation_type == "flat", "Flat", "Proportional"),
+    `Rank Correlation` = full_dataset_score
+  ) |>
+  arrange(Level, Budget, `Allocation Rule`) |>
+  knitr::kable(caption = "Step-wise search: rank correlation with the full distance matrix, by allocation", digits = 3, row.names = FALSE)
+```
+
+**Finding:** At the `r nrow(strategy2_var)`-indicator budget, step-wise search reaches a rank correlation of `r round(stepwise_score("flat_pillar_21", "distance"), 3)` under the flat pillar allocation and `r round(stepwise_score("prop_pillar_21", "distance"), 3)` under the proportional pillar allocation - both above the exhaustive-search results for the same allocations (`r round(strategy1_country$correlation[1], 3)` and `r round(strategy1b$correlation[1], 3)` respectively) and above the random baseline at matched size (`r round(fig2_results$mean_correlation[fig2_results$k == 23], 3)`). Under the flat sub-pillar allocation, step-wise search reaches `r round(stepwise_score("flat_subpillar_21", "distance"), 3)`, again exceeding both the exhaustive result (`r round(strategy2_country$correlation[1], 3)`) and the random baseline - reversing the earlier finding that sub-pillar-level allocation offers no advantage over chance. The same pattern - step-wise above both its exhaustive-search and random-baseline counterparts - holds at the `r CONFIG$exhaustive$proportional_target`-indicator budget across every allocation tested (Table above).
+
+This gap is a direct consequence of what each method optimizes. Exhaustive search maximizes each group's *local* score, computed only against that group's own indicators; the full-dataset score reported for it is a byproduct, not the search objective (see Limitations). Step-wise search instead scores every candidate against the full dataset at every step, so it can find combinations that a group-by-group local search cannot see - at the cost of no longer guaranteeing that the result is the best subset achievable for that allocation, only a local optimum with respect to one-indicator-at-a-time swaps from a random start.
+
+The table below breaks down, pillar by pillar, where the three approaches agree and diverge, for the `r CONFIG$exhaustive$strategy1_k_per_pillar`-indicators-per-pillar budget flat allocation uses: flat allocation's own exhaustive result, proportional allocation at the same matched budget, and step-wise search run under the flat allocation (so the step-wise-vs-exhaustive columns hold the per-pillar budget fixed). Every selected indicator appears in exactly one column: "Common to All Three" for indicators every approach picked, "Shared by Two" (labeled with which pair) for indicators exactly two agreed on, and one of the three "-only" columns for indicators picked by exactly one. A parallel breakdown at sub-pillar level is not shown: at this budget, proportional allocation across sub-pillars is mathematically identical to flat allocation (Methodology), so the three-way comparison would collapse to flat vs. step-wise alone, and the sub-pillar-level scores already appear in the table above.
+
+\blandscape
+
+```{r}
+build_overlap_table(strategy1_country, strategy1b, "flat_pillar_21", "distance",
+                     "best_spearman", function(x) pillar_names[x]) |>
+  knitr::kable(caption = "Country perspective: indicator overlap between flat allocation, proportional allocation, and step-wise search, by pillar (21-indicator budget)", row.names = FALSE)
+```
+
+\elandscape
+
 ## Variable Perspective
 
 ### PCA Analysis
@@ -299,43 +375,69 @@ pca_components |>
 
 **Finding:** The first `r pca_components[1,2]` of `r n_indicators_full` components already capture 80% of total variance, confirming substantial redundancy in the full indicator set - a necessary condition for indicator reduction to be viable at all. Note this is a property of the full PCA (unconstrained linear combinations of all `r n_indicators_full` indicators), not directly comparable to how many *raw indicators* a subset needs.
 
-### Reflective Indicators per Sub-Pillar (Flat Allocation - Headline Subset)
+### $r_m$ by Group and by Strategy
 
-In this section we present results for selecting within each sub-pillar the indicator with the best local $r_m$.
+The exhaustive-search sections below each report a *global* $r_m$ - the assembled subset's fit to the full-dataset PCA - built up from a *local* $r_m$ computed separately for every pillar or sub-pillar. This section collects both views into two reference tables before the individual strategies are discussed one at a time.
+
+The table below reports flat allocation's local $r_m$ - the score its exhaustive search actually maximizes - for every pillar and every sub-pillar (the same per-pillar values that also appear as the "Within-Group Score (Flat)" column of the indicator-overlap table under Step-wise Local Search, below):
 
 ```{r}
-strategy2_var |>
-  format_group_table("Sub-Pillar", function(x) subpillar_names[x], drop_cols = "r_m") |>
-  knitr::kable(caption = "Flat allocation (sub-pillar): reflective indicator per sub-pillar", digits = 3)
+rm_by_group <- bind_rows(
+  strategy1_var |> transmute(Level = "Pillar", Group = pillar_names[group], `$r_m$` = best_rm),
+  strategy2_var |> transmute(Level = "Sub-pillar", Group = subpillar_names[group], `$r_m$` = best_rm)
+)
+knitr::kable(rm_by_group, digits = 3, caption = "Within-group $r_m$ (flat allocation's exhaustive search), by pillar and sub-pillar", row.names = FALSE)
 ```
 
-**Finding:** This `r nrow(strategy2_var)`-indicator subset achieves $r_m$ = `r round(strategy2_var$r_m[1], 3)`, i.e. $r_m^2$ ≈ `r round(strategy2_var$r_m[1]^2 * 100, 1)`% of the full dataset's PCA variance structure.
+### Comparison of flat and proportional strategies in gobal $r_m$ 
 
-### Flat Allocation by Pillar (3 per Pillar) - Comparison
-
-```{r}
-strategy1_var |>
-  format_group_table("Pillar", function(x) pillar_names[x], drop_cols = "r_m") |>
-  knitr::kable(caption = "Flat allocation (pillar): best 3 indicators per pillar", digits = 3)
-```
-
-**Finding:** Flat allocation by pillar reaches $r_m$ = `r round(strategy1_var$r_m[1], 3)` ($r_m^2$ ≈ `r round(strategy1_var$r_m[1]^2 * 100, 1)`%) - marginally *higher* than flat allocation by sub-pillar's `r round(strategy2_var$r_m[1], 3)` at the same `r nrow(strategy2_var)`-indicator size. 
-
-### Proportional Allocation by Pillar and Sub-Pillar - Comparison
+The table below instead combines the *global* $r_m$ reported by each of the flat and proportional strategies discussed in the following sections into a single comparison (the step-wise alternative to these is introduced later, and appears in the Cross-Allocation Comparison table with the rest):
 
 ```{r}
-strategy1a_var |>
-  format_group_table("Pillar", function(x) pillar_names[x], drop_cols = "r_m") |>
-  knitr::kable(caption = "Proportional allocation across pillars", digits = 3)
-```
-
-```{r}
-strategy2a_var |>
-  format_group_table("Sub-Pillar", function(x) subpillar_names[x], drop_cols = "r_m") |>
-  knitr::kable(caption = "Proportional allocation across sub-pillars", digits = 3)
+global_rm_summary <- data.frame(
+  Strategy = c("Flat allocation (sub-pillar, headline)", "Flat allocation (pillar)",
+               "Proportional allocation (pillar)", "Proportional allocation (sub-pillar)"),
+  Indicators = c(nrow(strategy2_var), nrow(strategy1_var) * CONFIG$exhaustive$strategy1_k_per_pillar,
+                 sum(strategy1a_var$allocated), sum(strategy2a_var$allocated)),
+  `$r_m$` = c(strategy2_var$r_m[1], strategy1_var$r_m[1], strategy1a_var$r_m[1], strategy2a_var$r_m[1]),
+  check.names = FALSE
+)
+global_rm_summary$`$r_m^2$ (%)` <- round(global_rm_summary$`$r_m$`^2 * 100, 1)
+knitr::kable(global_rm_summary, digits = 3, caption = "Global $r_m$ (assembled subset vs. full-dataset PCA), by strategy", row.names = FALSE)
 ```
 
 **Finding:** At `r sum(strategy1a_var$allocated)` indicators, proportional allocation by pillar reaches $r_m$ = `r round(strategy1a_var$r_m[1], 3)` ($r_m^2$ ≈ `r round(strategy1a_var$r_m[1]^2 * 100, 1)`%) and proportional allocation by sub-pillar reaches $r_m$ = `r round(strategy2a_var$r_m[1], 3)` ($r_m^2$ ≈ `r round(strategy2a_var$r_m[1]^2 * 100, 1)`%) - both a large step up from the `r nrow(strategy2_var)`-indicator flat allocations, as expected with double the budget.
+
+### Step-wise Local Search
+
+The same step-wise local-search procedure (Methodology) was run under the $r_m$ criterion, for every allocation rule, grouping level and budget considered above, with `r unique(stepwise_results$n_restarts)` independent random restarts per combination and the best-scoring restart retained.
+
+```{r}
+stepwise_results |>
+  filter(metric == "r_m") |>
+  transmute(
+    Level = ifelse(level == "pillar", "Pillar", "Sub-pillar"),
+    Budget = budget,
+    `Allocation Rule` = ifelse(allocation_type == "flat", "Flat", "Proportional"),
+    `$r_m$` = full_dataset_score
+  ) |>
+  arrange(Level, Budget, `Allocation Rule`) |>
+  knitr::kable(caption = "Step-wise search: $r_m$ against the full-dataset PCA, by allocation", digits = 3, row.names = FALSE)
+```
+
+**Finding:** At `r nrow(strategy2_var)` indicators, step-wise search reaches $r_m$ = `r round(stepwise_score("flat_pillar_21", "r_m"), 3)` under the flat pillar allocation and `r round(stepwise_score("prop_pillar_21", "r_m"), 3)` under the proportional pillar allocation - both above the corresponding exhaustive-search results (`r round(strategy1_var$r_m[1], 3)` and `r round(strategy1b_var$r_m[1], 3)`) and above the random-subset baseline at matched size (`r round(r_m_curve$mean_r_m[r_m_curve$k == 23], 3)`). Under the flat sub-pillar allocation, step-wise search reaches $r_m$ = `r round(stepwise_score("flat_subpillar_21", "r_m"), 3)`, again exceeding both the exhaustive result (`r round(strategy2_var$r_m[1], 3)`) and the random baseline - reversing the earlier finding that, at this budget, the constrained search offers no advantage over chance on the PCA criterion. The same pattern holds at `r CONFIG$exhaustive$proportional_target` indicators across every allocation tested (Table above), for the same reason given in the country perspective: step-wise search directly optimizes the full-dataset $r_m$ at every step, where exhaustive search optimizes each group's local $r_m$ and is only re-scored against the full PCA afterwards (Limitations).
+
+As in the country perspective, the table below compares flat allocation's exhaustive result, proportional allocation at the matched budget, and step-wise search run under the flat allocation, pillar by pillar, with every selected indicator accounted for in exactly one of the "Common to All Three", "Shared by Two", or single-approach "-only" columns.
+
+\blandscape
+
+```{r}
+build_overlap_table(strategy1_var, strategy1b_var, "flat_pillar_21", "r_m",
+                     "best_rm", function(x) pillar_names[x]) |>
+  knitr::kable(caption = "Variable perspective: indicator overlap between flat allocation, proportional allocation, and step-wise search, by pillar (21-indicator budget)", row.names = FALSE)
+```
+
+\elandscape
 
 ### Flat-Allocation Sweep: 1-4 Indicators per Pillar
 
@@ -386,38 +488,65 @@ optimal_subset |>
 
 # Cross-Allocation Comparison
 
+The tables below collapse every allocation rule, grouping level and budget considered above - under both exhaustive search and step-wise search - into a single comparison per perspective.
+
 ```{r}
-country_comparison <- data.frame(
-  `Allocation Rule` = c("Flat allocation (pillar)", "Flat allocation (sub-pillar)",
-                        "Proportional allocation (pillar)", "Proportional allocation (pillar)",
-                        "Proportional allocation (sub-pillar)"),
+exhaustive_country <- data.frame(
+  Level = c("Pillar", "Sub-pillar", "Pillar", "Pillar", "Sub-pillar"),
+  `Allocation Rule` = c("Flat", "Flat", "Proportional", "Proportional", "Proportional"),
   Indicators = c(nrow(strategy1_country) * CONFIG$exhaustive$strategy1_k_per_pillar, nrow(strategy2_country),
                  sum(strategy1b$allocated), sum(strategy1a$allocated), sum(strategy2a$allocated)),
   `Rank Correlation` = c(strategy1_country$correlation[1], strategy2_country$correlation[1],
                          strategy1b$correlation[1], strategy1a$correlation[1], strategy2a$correlation[1]),
+  `Search Method` = "Exhaustive search",
   check.names = FALSE
 )
-country_comparison <- country_comparison[order(country_comparison$Indicators), ]
-knitr::kable(country_comparison, caption = "Country perspective: allocation rules compared, by budget",
+stepwise_country <- stepwise_results |>
+  filter(metric == "distance") |>
+  transmute(
+    Level = ifelse(level == "pillar", "Pillar", "Sub-pillar"),
+    `Allocation Rule` = ifelse(allocation_type == "flat", "Flat", "Proportional"),
+    Indicators = budget,
+    `Rank Correlation` = full_dataset_score,
+    `Search Method` = "Step-wise search"
+  )
+country_comparison <- rbind(exhaustive_country, stepwise_country)
+country_comparison <- country_comparison[order(country_comparison$Level, country_comparison$Indicators,
+                                                 country_comparison$`Allocation Rule`, country_comparison$`Search Method`), ]
+knitr::kable(country_comparison, caption = "Country perspective: allocation rules compared, by level, budget and search method",
              digits = 3, row.names = FALSE)
 ```
 
 ```{r}
-variable_comparison <- data.frame(
-  `Allocation Rule` = c("Flat allocation (pillar)", "Flat allocation (sub-pillar, headline)",
-                        "Proportional allocation (pillar)", "Proportional allocation (pillar)",
-                        "Proportional allocation (sub-pillar)"),
+exhaustive_var <- data.frame(
+  Level = c("Pillar", "Sub-pillar", "Pillar", "Pillar", "Sub-pillar"),
+  `Allocation Rule` = c("Flat", "Flat", "Proportional", "Proportional", "Proportional"),
   Indicators = c(nrow(strategy1_var) * CONFIG$exhaustive$strategy1_k_per_pillar, nrow(strategy2_var),
                  sum(strategy1b_var$allocated), sum(strategy1a_var$allocated), sum(strategy2a_var$allocated)),
   r_m = c(strategy1_var$r_m[1], strategy2_var$r_m[1],
           strategy1b_var$r_m[1], strategy1a_var$r_m[1], strategy2a_var$r_m[1]),
+  `Search Method` = "Exhaustive search",
   check.names = FALSE
 )
-variable_comparison <- variable_comparison[order(variable_comparison$Indicators), ]
+stepwise_var <- stepwise_results |>
+  filter(metric == "r_m") |>
+  transmute(
+    Level = ifelse(level == "pillar", "Pillar", "Sub-pillar"),
+    `Allocation Rule` = ifelse(allocation_type == "flat", "Flat", "Proportional"),
+    Indicators = budget,
+    r_m = full_dataset_score,
+    `Search Method` = "Step-wise search"
+  )
+variable_comparison <- rbind(exhaustive_var, stepwise_var)
+variable_comparison <- variable_comparison[order(variable_comparison$Level, variable_comparison$Indicators,
+                                                   variable_comparison$`Allocation Rule`, variable_comparison$`Search Method`), ]
 variable_comparison$r_m_squared_pct <- round(variable_comparison$r_m^2 * 100, 1)
-names(variable_comparison) <- c("Allocation Rule", "Indicators", "$r_m$", "$r_m^2$ (%)")
-knitr::kable(variable_comparison, caption = "Variable perspective: allocation rules compared, by budget", digits = 3, row.names = FALSE)
+names(variable_comparison) <- c("Level", "Allocation Rule", "Indicators", "$r_m$", "Search Method", "$r_m^2$ (%)")
+variable_comparison <- variable_comparison[, c("Level", "Allocation Rule", "Indicators", "$r_m$", "$r_m^2$ (%)", "Search Method")]
+knitr::kable(variable_comparison, caption = "Variable perspective: allocation rules compared, by level, budget and search method", digits = 3, row.names = FALSE)
 ```
+
+**Finding:** Step-wise search scores at or above its exhaustive-search counterpart in every one of the five allocation/budget combinations both methods were run on, under both metrics (ten comparisons in total) - not a coincidence, but a consequence of what each method optimizes: exhaustive search maximizes a *local*, group-level criterion and is merely re-scored against the full dataset afterwards, while step-wise search optimizes the full-dataset criterion directly at every step (Methodology; discussed per-perspective above). Exhaustive search remains the only one of the two with a guarantee of finding the best possible subset for the criterion it is given; step-wise search offers no such guarantee, only a local optimum from a random start, mitigated here by keeping the best of several restarts.
 
 **Finding:** Proportional allocation at `r CONFIG$exhaustive$proportional_target` indicators outperforms flat allocation at `r nrow(strategy2_var)` indicators on both metrics. Compared at a common budget, however, the two rules are nearly indistinguishable: at `r nrow(strategy2_var)` indicators across pillars, proportional allocation reaches a rank correlation of `r round(strategy1b$correlation[1], 3)` against flat allocation's `r round(strategy1_country$correlation[1], 3)`, and $r_m$ = `r round(strategy1b_var$r_m[1], 3)` against `r round(strategy1_var$r_m[1], 3)`.
 
@@ -441,7 +570,7 @@ The case for proportional allocation is therefore representational rather than s
 
 1.  **Single-year analysis.** This analysis covers GII 2025 only; temporal stability of the recommended subset across years has not been assessed.
 2.  **PCA-defined "information."** The $r_m$ criterion equates information content with PCA variance structure; a substantively important but low covariance indicator could be excluded even if policy-relevant.
-3.  **Local search proxy.** Exhaustive search within each pillar/sub-pillar uses a local $r_m$ computed on that group's own sub-PCA (not the full `r n_indicators_full`-indicator PCA) as a tractable stand-in for an otherwise infeasible full search; the assembled subset is re-scored against the true full-dataset metric for reporting, but the *search* itself never directly optimizes that metric.
+3.  **Local search proxy.** Exhaustive search within each pillar/sub-pillar uses a local $r_m$ computed on that group's own sub-PCA (not the full `r n_indicators_full`-indicator PCA) as a tractable stand-in for an otherwise infeasible full search; the assembled subset is re-scored against the true full-dataset metric for reporting, but the *search* itself never directly optimizes that metric. Step-wise local search (Methodology) avoids this specific limitation, since it optimizes the full-dataset metric directly - at the cost of no longer guaranteeing the result is the best subset achievable for that allocation, only a local optimum from a random start.
 4.  **Linear relationships assumed.** Both the rank-correlation and $r_m$ criteria are built on linear/monotonic structure (PCA, Euclidean distance); non-linear relationships between indicators are not captured.
 5.  **Domain-specific validity not tested.** Whether the recommended subset remains meaningful to GII's intended policy audience has not been evaluated here and would require domain-expert review.
 
@@ -451,8 +580,8 @@ All data and code are available in this repository:
 
 - Raw data: `gii-data/idata.xlsx`, `gii-data/imeta.xlsx`
 - Processed data: `data/gii_data_standardized.csv`, `data/gii_data_complete_cases.csv`
-- Analysis scripts: `scripts/00_setup.R` through `scripts/04_variable_perspective.R`, shared functions in `scripts/R/`
-- Results: `outputs/` (CSVs for tabular results, `.rds` for clustering objects)
+- Analysis scripts: `scripts/00_setup.R` through `scripts/04_variable_perspective.R`, plus `scripts/04_step-wise.R` (step-wise local search), shared functions in `scripts/R/`
+- Results: `outputs/` (CSVs for tabular results, `.rds` for clustering objects; `stepwise_search_results.csv` and `stepwise_selected_variables.csv` for the step-wise search)
 
 # References
 

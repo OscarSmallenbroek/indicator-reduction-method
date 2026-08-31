@@ -281,6 +281,154 @@ best_allocation_within_group <- function(allocation, imeta, data, level = 3,
   bind_rows(best_results)
 }
 
+#' Build a scorer that evaluates a candidate subset of indicator codes
+#' against the WHOLE dataset, as opposed to make_dist_scorer()/
+#' make_rm_scorer(), which each score against a single group's own
+#' sub-matrix/sub-PCA. This is the criterion stepwise_search() optimizes: a
+#' candidate combination is always compared to the full index, matching
+#' subset_test() in replication/Oscar_stepwise.R (which always compares to
+#' sm_broad_ranks) and the r_m_named() pattern in 04_variable_perspective.R.
+#' @param data Full standardized indicator data (data frame or matrix,
+#'   columns named by indicator code)
+#' @param metric Selection criterion: "r_m" (default) or "distance"
+#' @return Function taking a character vector of indicator codes and
+#'   returning the score of that subset against the full dataset
+make_full_scorer <- function(data, metric = c("r_m", "distance")) {
+  metric <- match.arg(metric)
+  dm <- as.matrix(data)
+  if (metric == "distance") {
+    full_ranks <- rank(as.vector(sim_matrix(dm)))
+    function(subset_codes) {
+      cor(full_ranks,
+          rank(as.vector(sim_matrix(dm[, subset_codes, drop = FALSE]))))
+    }
+  } else {
+    pca_result <- prcomp(dm, center = TRUE, scale. = TRUE)
+    eig_values <- pca_result$sdev^2
+    data_pc <- dm %*% as.matrix(pca_result$rotation)
+    function(subset_codes) {
+      r_m(subset_codes, data_pc, dm, eig_values)
+    }
+  }
+}
+
+#' Step-wise local-search optimization for the best subset of indicators
+#' within each group, scored against the WHOLE dataset rather than locally
+#' per group - contrast with best_allocation_within_group(), which is
+#' exhaustive but local (each group is scored only against its own
+#' sub-matrix/sub-PCA, per the CLAUDE.md "how the search works" note).
+#'
+#' Replicates best_n_step() in replication/Oscar_stepwise.R: start from a
+#' random per-group selection, then repeatedly try swapping each selected
+#' indicator for every unselected indicator from its own group, keeping any
+#' swap that improves the FULL-dataset score, until a full pass over every
+#' group makes no improving swap or `n_rounds` is reached. A swap is never
+#' allowed to duplicate an indicator already in the selection - a duplicated
+#' column would be double-weighted in the Euclidean distance / PCA and let
+#' the climber buy score with fewer than the intended number of distinct
+#' indicators.
+#'
+#' Unlike the exhaustive search, this scales to allocations too large to
+#' enumerate by combination (e.g. proportional budgets), at the cost of only
+#' finding a local optimum - the original was run from several random starts
+#' for this reason (`for (i in 1:5) best_n_step(3, 100)`).
+#'
+#' @param allocation Named vector of group_code -> number of indicators to
+#'   select from that group (e.g. from largest_remainder_allocation(), or
+#'   `setNames(rep(n, length(group_codes)), group_codes)` for a flat n - see
+#'   stepwise_k_within_group())
+#' @param imeta Metadata data frame
+#' @param data Standardized indicator data (data frame or matrix, columns
+#'   named by indicator code)
+#' @param level Level to group by (3 = pillar, 2 = sub-pillar)
+#' @param metric Selection criterion: "r_m" (default) or "distance"
+#' @param n_rounds Maximum number of passes over all groups (default 100,
+#'   matching Oscar_stepwise.R)
+#' @param init_vars Optional starting selection: a named list/vector of
+#'   group_code -> character vector of indicator codes (one per allocated
+#'   slot). If NULL (default), the starting selection is drawn at random from
+#'   each group with sample() - set a seed before calling for reproducibility.
+#' @param verbose Print the score after each round (default FALSE)
+#' @return List with `vars` (character vector of selected indicator codes,
+#'   ordered by group as in `allocation`), `score` (final full-dataset score)
+#'   and `rounds` (number of rounds actually run before convergence)
+stepwise_search <- function(allocation, imeta, data, level = 3,
+                             metric = c("r_m", "distance"), n_rounds = 100,
+                             init_vars = NULL, verbose = FALSE) {
+  metric <- match.arg(metric)
+  group_codes <- names(allocation)
+  score_fn <- make_full_scorer(data, metric)
+
+  group_vars <- setNames(
+    lapply(group_codes, group_variables, imeta = imeta, level = level),
+    group_codes
+  )
+
+  if (is.null(init_vars)) {
+    curt_vars <- unlist(
+      Map(function(g, k) sample(group_vars[[g]], k), group_codes, allocation),
+      use.names = FALSE
+    )
+  } else {
+    curt_vars <- unlist(init_vars[group_codes], use.names = FALSE)
+  }
+  stopifnot(length(curt_vars) == sum(allocation), !anyDuplicated(curt_vars))
+
+  # Which group each slot in curt_vars belongs to, so a swap only ever draws
+  # a replacement from that slot's own group.
+  slot_group <- rep(group_codes, allocation)
+
+  to_beat <- score_fn(curt_vars)
+  if (verbose) message("Round 0: score = ", round(to_beat, 6))
+
+  rounds_run <- 0
+  for (r in seq_len(n_rounds)) {
+    rounds_run <- r
+    improved <- FALSE
+    for (g in group_codes) {
+      pot_vars <- group_vars[[g]]
+      for (slot in which(slot_group == g)) {
+        for (t_v in pot_vars) {
+          # Re-read the slot's current occupant every candidate, not once per
+          # slot: an accepted swap earlier in this same inner loop changes
+          # it, and later candidates must be tested against the new
+          # occupant, exactly as in Oscar_stepwise.R's best_n_step().
+          c_v <- curt_vars[slot]
+          if (t_v == c_v || t_v %in% curt_vars) next
+          test_vars <- curt_vars
+          test_vars[slot] <- t_v
+          s_test <- score_fn(test_vars)
+          if (s_test > to_beat) {
+            curt_vars <- test_vars
+            to_beat <- s_test
+            improved <- TRUE
+          }
+        }
+      }
+    }
+    if (verbose) message("Round ", r, ": score = ", round(to_beat, 6))
+    if (!improved) break
+  }
+
+  list(vars = curt_vars, score = to_beat, rounds = rounds_run)
+}
+
+#' Step-wise search with the same number of indicators n per group - the flat
+#' wrapper around stepwise_search(), mirroring best_k_within_group()'s
+#' relationship to best_allocation_within_group().
+#' @param n Number of indicators to select per group
+#' @param group_codes Vector of group codes
+#' @inheritParams stepwise_search
+#' @return See stepwise_search()
+stepwise_k_within_group <- function(n, group_codes, imeta, data, level = 3,
+                                     metric = c("r_m", "distance"),
+                                     n_rounds = 100, init_vars = NULL,
+                                     verbose = FALSE) {
+  allocation <- setNames(rep(n, length(group_codes)), group_codes)
+  stepwise_search(allocation, imeta, data, level, match.arg(metric),
+                   n_rounds, init_vars, verbose)
+}
+
 # Clustering comparison. simprof() comes from the clustsig package, which the
 # calling scripts attach; partitionComparison must also be attached for
 # rand_ind() to dispatch randIndex().

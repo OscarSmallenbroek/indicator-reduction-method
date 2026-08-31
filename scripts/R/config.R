@@ -82,6 +82,17 @@ CONFIG <- list(
     min_per_pillar = 1
   ),
 
+  # Step-wise local-search optimization (04_step-wise.R). An alternative to
+  # the exhaustive search in 03/03b/04 that scales to budgets/allocations too
+  # large to enumerate by combination - see
+  # scripts/R/functions.R::stepwise_search() and replication/Oscar_stepwise.R.
+  stepwise = list(
+    budgets = c(21, 42),  # total indicators to select (matches the flat and
+                           # proportional exhaustive-search budgets above)
+    n_rounds = 100,        # max swap passes per restart (matches best_n_step(3, 100))
+    n_restarts = 5         # random restarts per combination; best-scoring kept
+  ),
+
   # Random seed for reproducibility
   seed = 42
 )
